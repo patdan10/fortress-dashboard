@@ -97,7 +97,6 @@ def get_congestion(formatted, cur):
     out = cur.fetchall()
     temp = pd.DataFrame(data=out)
     temp.columns = temps
-    print(temp)
 
     temp.sort_values(by=['Congest'], ascending=False, inplace=True)
     tempMax = temp.drop_duplicates('Node').head(5)
