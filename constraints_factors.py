@@ -53,7 +53,7 @@ def scatter_seaborn_returner(dfs, listo, con, reverse):
     print("LASD", listo)
     print("CONCN", con)
     print("REAVAV", reverse)
-    print("COLS",,df.columns)
+    print("COLS",df.columns)
     
     index = df.index
     a_list = list(index)
