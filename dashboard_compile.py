@@ -288,7 +288,8 @@ def compile(df, listo, maxes, mins):
         # Setup for Seaborn
         df[conOption] = tdf
         df[conOption].rename(columns=reverse_dict, inplace=True)
-
+        
+        print("DIFF", df)
         # If data, then get seaborb
         if len(df[conOption]) > 1:
             print("SCATTER")
