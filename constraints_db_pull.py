@@ -48,8 +48,11 @@ def get_congestion(formatted, cur):
     string = make_string(dates, "p")
 
     # Get columns for high congestion for constraint and low congestion for constraint
-    maxes = ['PriceDate', 'Hour', 'HiCongestRT']
-    mins = ['PriceDate', 'Hour', 'LoCongestRT']
+    maxes = ['PriceDate', 'Hour', 'HiCongestRT', 'Node']
+    mins = ['PriceDate', 'Hour', 'LoCongestRT', 'Node']
+    temps = ['PriceDate', 'Hour', 'Congest', 'Node']
+
+    print("FIRST")
 
     # Get high congestion points
     comm = """SELECT p.pricedate, p.hour, MAX(p.rtmcc)
@@ -60,26 +63,14 @@ def get_congestion(formatted, cur):
     cur.execute(comm)
     out = cur.fetchall()
     dfMax = pd.DataFrame(data=out)
-    dfMax.columns = maxes
-
-
-    comm = """SELECT p.pricedate, p.hour, p.rtmcc
-                        FROM prices p
-                        WHERE (""" + string + """
-                        GROUP BY p.rtmcc, p.pricedate, p.hour
-                        ORDER BY p.rtmcc DESC
-                        LIMIT 5"""
-    cur.execute(comm)
-    out = cur.fetchall()
-    tempMax = pd.DataFrame(data=out)
-    tempMax.columns = maxes
+    dfMax.columns = maxes[:-1]
 
     # Sort high congestion
     dfMax.sort_values(by=['PriceDate', 'Hour'], inplace=True)
     dfMax.reset_index(inplace=True, drop=True)
 
 
-
+    print("THIRD")
 
     # Get low congestion points
     comm = """SELECT p.pricedate, p.hour, MIN(p.rtmcc)
@@ -91,19 +82,31 @@ def get_congestion(formatted, cur):
     cur.execute(comm)
     out = cur.fetchall()
     dfMin = pd.DataFrame(data=out)
-    dfMin.columns = mins
+    dfMin.columns = mins[:-1]
 
 
-    comm = """SELECT p.pricedate, p.hour, p.rtmcc
+    print("FOURTH")
+
+
+    comm = """SELECT p.pricedate, p.hour, p.rtmcc, n.nodename
                         FROM prices p
+                        LEFT OUTER JOIN nodes n ON (p.node_id=n.node_id)
                         WHERE (""" + string + """
-                        GROUP BY p.rtmcc, p.pricedate, p.hour
-                        ORDER BY p.rtmcc ASC
-                        LIMIT 5"""
+                        GROUP BY p.rtmcc, p.pricedate, p.hour, n.nodename"""
     cur.execute(comm)
     out = cur.fetchall()
-    tempMin = pd.DataFrame(data=out)
-    tempMin.columns = mins
+    temp = pd.DataFrame(data=out)
+    temp.columns = temps
+    print(temp)
+
+    temp.sort_values(by=['Congest'], ascending=False, inplace=True)
+    tempMax = temp.drop_duplicates('Node').head(5)
+    tempMax.rename(columns={"Congest": "HiCongestRT"})
+    temp.sort_values(by=['Congest'], ascending=True, inplace=True)
+    tempMin = temp.drop_duplicates('Node').head(5)
+    tempMin.rename(columns={"Congest": "LoCongestRT"})
+
+
 
     # Sort high congestion values
     dfMin.sort_values(by=['PriceDate', 'Hour'], inplace=True)
@@ -118,7 +121,7 @@ def get_congestion(formatted, cur):
     return formatted, tempMax, tempMin
 
 # Get the nodes congestions
-def get_nodes(df, cur, hi, lo, maxes, mins):
+def get_nodes(df, cur, hi, lo):
     
     # Get the high congestion
     nmaxes = ['PriceDate', 'Hour', 'HiCongestRT', 'NodeNameSupply']
@@ -150,41 +153,8 @@ def get_nodes(df, cur, hi, lo, maxes, mins):
     df = pd.merge(df, nodesMax, how='left', on=['PriceDate', 'Hour', 'HiCongestRT'])
     df = pd.merge(df, nodesMin, how='left', on=['PriceDate', 'Hour', 'LoCongestRT'])
 
-    maxes.dropna(inplace=True)
-    mins.dropna(inplace=True)
 
-    longhis = make_string_da_rt(maxes['PriceDate'].tolist(), maxes['Hour'].tolist(), maxes['HiCongestRT'].tolist())
-    longlos = make_string_da_rt(mins['PriceDate'].tolist(), mins['Hour'].tolist(), mins['LoCongestRT'].tolist())
-
-    minimax = pd.DataFrame()
-    # Get the high congestion
-    nmaxes = ['PriceDate', 'Hour', 'HiCongestRT', 'NodeNameSupply']
-    comm = """SELECT p.pricedate, p.hour, p.rtmcc, n.nodename
-                FROM prices p
-                LEFT OUTER JOIN nodes n ON (p.node_id=n.node_id)
-                WHERE """ + longhis + """
-                GROUP BY p.pricedate, p.hour, p.rtmcc, n.nodename
-                LIMIT 5"""
-    cur.execute(comm)
-    out = cur.fetchall()
-    tempmax = pd.DataFrame(data=out)
-    tempmax.columns = nmaxes
-
-    # Get the low congestion
-    nmins = ['PriceDate', 'Hour', 'LoCongestRT', 'NodeNameDemand']
-    comm = """SELECT p.pricedate, p.hour, p.rtmcc, n.nodename
-                FROM prices p
-                LEFT OUTER JOIN nodes n ON (p.node_id=n.node_id)
-                WHERE """ + longlos + """
-                GROUP BY p.pricedate, p.hour, p.rtmcc, n.nodename
-                LIMIT 5"""
-    cur.execute(comm)
-    out = cur.fetchall()
-    tempmin = pd.DataFrame(data=out)
-    tempmin.columns = nmins
-
-
-    return df, tempmax, tempmin
+    return df
 
 # Get prices
 def get_prices(df, cur):
@@ -418,15 +388,10 @@ def dict_get_more_data(df):
     
     # For each constraint
     for k in listo:
-        print(k)
         # Get all of these
-        print("START")
-        one, tmax, tmin = get_congestion(df[k], cur)
-        print("ONE")
+        one, maxes, mins = get_congestion(df[k], cur)
         two, hi, lo = get_prices(one, cur)
-        print("TWO")
-        three, maxes, mins = get_nodes(two, cur, hi, lo, tmax, tmin)
-        print("THREE")
+        three = get_nodes(two, cur, hi, lo)
         maxes['Constraint'] = k
         mins['Constraint'] = k
         if counter == 0.0:
@@ -436,22 +401,15 @@ def dict_get_more_data(df):
             final_maxes = final_maxes.append(maxes, sort=False)
             final_mins = final_mins.append(mins, sort=False)
         four = get_loads(three, cur)
-        print("FOUR")
         if type(four) == type("BROKE"):
             df.pop(k)
         five = get_weather(four, cur)
-        print("FIVE")
         df[k] = five
         df[k]['PriceDate'] = df[k]['PriceDate'].map(lambda x: x.strftime("%d/%m/%y "))
         counter += len(df[k])
         progress.text(str(round((counter/size)*100,2)) + "% Complete")
-        print("END")
 
     progress.empty()
     # Return
     conn.close()
     return df, listo, final_maxes, final_mins
-
-
-
-
