@@ -44,8 +44,10 @@ def cons_seperator(df):
 
     out = dict(list(df.items()))
     
+    length = 2
+    
     # Get Random 30
-    rando = random.randint(0, len(df.items())-30)
-    out = dict(list(df.items())[rando:rando+30])
+    rando = random.randint(0, len(df.items())-length)
+    out = dict(list(df.items())[rando:rando+length])
     
     return out
