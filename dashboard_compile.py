@@ -293,9 +293,9 @@ def compile(df, listo, maxes, mins):
         # If data, then get seaborb
         if len(df[conOption]) > 1:
             print("SCATTER")
-            plot2 = constraints_factors.scatter_seaborn_returner(df, listo, conOption, reverse_dict)
-            st.markdown('##')
-            st.pyplot(plot2)
+            #plot2 = constraints_factors.scatter_seaborn_returner(df, listo, conOption, reverse_dict)
+            #st.markdown('##')
+            #st.pyplot(plot2)
 
         df = dfCopy.copy()
 
