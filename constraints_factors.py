@@ -78,8 +78,8 @@ def scatter_seaborn_returner(dfs, listo, con, reverse):
         corrs.drop(t, axis=1, inplace=True)
     
     # This one is different for some reason
-    corrs.drop("06D", axis=0, inplace=True)
-    corrs.drop("06D", axis=1, inplace=True)
+    #corrs.drop("06D", axis=0, inplace=True)
+    #corrs.drop("06D", axis=1, inplace=True)
 
     # Generate and return the heatmap
     ax = sns.heatmap(corrs, annot=True)
