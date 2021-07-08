@@ -50,7 +50,7 @@ def scatter_seaborn_returner(dfs, listo, con, reverse):
     dropsRows = ['Shadow', 'HiCongestRT', 'LoCongestRT', 'HiPriceDA', 'HiPriceRT', 'LoPriceDA', 'LoPriceRT', 'LoShift', 'HiShift', 'Spread']
     
     print("DDDD", dfs)
-    print("LASD", liso)
+    print("LASD", listo)
     print("CONCN", con)
     print("REAVAV", reverse)
     
