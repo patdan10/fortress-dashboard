@@ -48,6 +48,12 @@ def scatter_seaborn_returner(dfs, listo, con, reverse):
     # Columns to drop
     dropsCols = ['AverageLoad', 'Region 1', 'Region 2', 'Region 3', 'Region 4', 'Region 5', 'WindSum', 'NetLoad']
     dropsRows = ['Shadow', 'HiCongestRT', 'LoCongestRT', 'HiPriceDA', 'HiPriceRT', 'LoPriceDA', 'LoPriceRT', 'LoShift', 'HiShift', 'Spread']
+    
+    print("DDDD", dfs)
+    print("LASD", liso)
+    print("CONCN", con)
+    print("REAVAV", reverse)
+    
     corrs.drop('Hour', axis=0, inplace=True)
     corrs.drop('Hour', axis=1, inplace=True)
     
