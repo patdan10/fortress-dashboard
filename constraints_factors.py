@@ -60,7 +60,7 @@ def scatter_seaborn_returner(dfs, listo, con, reverse):
     print("ROW",a_list)
     
     
-    print("WOWO")
+    print(corrs)
     #corrs.drop('Hour', axis=0, inplace=True)
     #corrs.drop('Hour', axis=1, inplace=True)
     
