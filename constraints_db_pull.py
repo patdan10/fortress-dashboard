@@ -101,10 +101,10 @@ def get_congestion(formatted, cur):
 
     temp.sort_values(by=['Congest'], ascending=False, inplace=True)
     tempMax = temp.drop_duplicates('Node').head(5)
-    tempMax.rename(columns={"Congest": "HiCongestRT"})
+    tempMax.rename(columns={"Congest": "HiCongestRT"}, inplace=True)
     temp.sort_values(by=['Congest'], ascending=True, inplace=True)
     tempMin = temp.drop_duplicates('Node').head(5)
-    tempMin.rename(columns={"Congest": "LoCongestRT"})
+    tempMin.rename(columns={"Congest": "LoCongestRT"}, inplace=True)
 
 
 
