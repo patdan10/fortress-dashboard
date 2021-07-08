@@ -418,10 +418,15 @@ def dict_get_more_data(df):
     
     # For each constraint
     for k in listo:
+        print(k)
         # Get all of these
+        print("START")
         one, tmax, tmin = get_congestion(df[k], cur)
+        print("ONE")
         two, hi, lo = get_prices(one, cur)
+        print("TWO")
         three, maxes, mins = get_nodes(two, cur, hi, lo, tmax, tmin)
+        print("THREE")
         maxes['Constraint'] = k
         mins['Constraint'] = k
         if counter == 0.0:
@@ -431,13 +436,16 @@ def dict_get_more_data(df):
             final_maxes = final_maxes.append(maxes, sort=False)
             final_mins = final_mins.append(mins, sort=False)
         four = get_loads(three, cur)
+        print("FOUR")
         if type(four) == type("BROKE"):
             df.pop(k)
         five = get_weather(four, cur)
+        print("FIVE")
         df[k] = five
         df[k]['PriceDate'] = df[k]['PriceDate'].map(lambda x: x.strftime("%d/%m/%y "))
         counter += len(df[k])
         progress.text(str(round((counter/size)*100,2)) + "% Complete")
+        print("END")
 
     progress.empty()
     # Return
