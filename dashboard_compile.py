@@ -39,6 +39,11 @@ reverse_dict = {v: k for k, v in colsDict.items()}
 def compile(df, listo, maxes, mins):
     #maxes = pd.DataFrame(maxes, columns=maxes.keys(), index=range(len(maxes.keys())))
     #mins = pd.DataFrame(mins, columns=mins.keys(), index=range(len(maxes.keys())))
+    print("BEFORE")
+    print(df)
+    print(listo)
+    print(maxes)
+    print(mins)
     print("BREAK")
 
     temp = pd.DataFrame()
