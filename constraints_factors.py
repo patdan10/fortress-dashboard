@@ -67,8 +67,8 @@ def scatter_seaborn_returner(dfs, listo, con, reverse):
     # Drop the columns for rows and columns
     for d in dropsCols:
         corrs.drop(reverse[d], axis=0, inplace=True)
-    for d in dropsRows:
-        corrs.drop(reverse[d], axis=1, inplace=True)
+    #for d in dropsRows:
+        #corrs.drop(reverse[d], axis=1, inplace=True)
     
     # Remove the node winds and temps
     threes = list(df.columns.values)
