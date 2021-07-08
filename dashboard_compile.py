@@ -39,12 +39,6 @@ reverse_dict = {v: k for k, v in colsDict.items()}
 def compile(df, listo, maxes, mins):
     #maxes = pd.DataFrame(maxes, columns=maxes.keys(), index=range(len(maxes.keys())))
     #mins = pd.DataFrame(mins, columns=mins.keys(), index=range(len(maxes.keys())))
-    print("BEFORE")
-    print("DF",df)
-    print("LI",listo)
-    print("MA",maxes)
-    print("MI",mins)
-    print("BREAK")
 
     temp = pd.DataFrame()
 
@@ -60,7 +54,6 @@ def compile(df, listo, maxes, mins):
     mins = temp.copy().sort_values(by=['LoCongestRT']).reset_index(drop=True)
     mins['PriceDate'] = mins['PriceDate'].map(lambda x: x.strftime("%d/%m/%y "))
     mins.columns = ['Date', 'Hour', 'MCC', 'Node', 'Constraint']
-    print(mins, maxes)
 
     dfCopy = df.copy()
     maxesCopy = maxes.copy()
