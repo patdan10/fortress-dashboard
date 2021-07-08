@@ -13,7 +13,7 @@ def main():
     fp3 = "backupMin" + today.strftime("%d-%b-%y") + ".xlsx"
     
     # If filepath exists, just read the excel. So that you only have to actually pull once per day.
-    if os.path.exists(fp):
+    if os.path.exists(fp) and False:
         df, maxes, mins = constraints_excel_parser.get_excel(fp, fp2, fp3)
         listo = list(df.keys())
         return df, listo, maxes, mins
