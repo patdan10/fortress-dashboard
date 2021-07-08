@@ -53,9 +53,16 @@ def scatter_seaborn_returner(dfs, listo, con, reverse):
     print("LASD", listo)
     print("CONCN", con)
     print("REAVAV", reverse)
+    print(data.columns)
+    
+    index = a_dataframe.index
+    a_list = list(index)
+    print(a_list)
+    
+    
     
     corrs.drop('Hour', axis=0, inplace=True)
-    corrs.drop('Hour', axis=1, inplace=True)
+    #corrs.drop('Hour', axis=1, inplace=True)
     
     # Drop the columns for rows and columns
     for d in dropsCols:
