@@ -6,7 +6,7 @@ import os
 
 def main():
     today = datetime.today()
-    #today -= timedelta(1)
+    today -= timedelta(1)
     # Get filepath
     fp = "backup" + today.strftime("%d-%b-%y") + ".xlsx"
     fp2 = "backupMax" + today.strftime("%d-%b-%y") + ".xlsx"
