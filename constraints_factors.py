@@ -10,6 +10,7 @@ import seaborn as sns
 from matplotlib import pyplot as plt
 import matplotlib
 import statistics
+import streamlit as st
 
 # Return the scatterplot with the correct axes and filters
 def scatter_matplot_returner(dfs, listo, con, dataX, dataY, dataF, limit, dir):
@@ -49,18 +50,11 @@ def scatter_seaborn_returner(dfs, listo, con, reverse):
     dropsCols = ['AverageLoad', 'Region 1', 'Region 2', 'Region 3', 'Region 4', 'Region 5', 'WindSum', 'NetLoad']
     dropsRows = ['Shadow', 'HiCongestRT', 'LoCongestRT', 'HiPriceDA', 'HiPriceRT', 'LoPriceDA', 'LoPriceRT', 'LoShift', 'HiShift', 'Spread']
     
-    print("DDDD", dfs)
-    print("LASD", listo)
-    print("CONCN", con)
-    print("REAVAV", reverse)
-    print("COLS",df.columns)
-    
     index = df.index
     a_list = list(index)
-    print("ROW",a_list)
     
     
-    print(corrs)
+    st.write(corrs)
     #corrs.drop('Hour', axis=0, inplace=True)
     #corrs.drop('Hour', axis=1, inplace=True)
     
