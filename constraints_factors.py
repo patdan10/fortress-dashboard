@@ -55,14 +55,14 @@ def scatter_seaborn_returner(dfs, listo, con, reverse):
     
     
     st.write(corrs)
-    #corrs.drop('Hour', axis=0, inplace=True)
-    #corrs.drop('Hour', axis=1, inplace=True)
+    corrs.drop('Hour', axis=0, inplace=True)
+    corrs.drop('Hour', axis=1, inplace=True)
     
     # Drop the columns for rows and columns
     for d in dropsCols:
         corrs.drop(reverse[d], axis=0, inplace=True)
-    #for d in dropsRows:
-        #corrs.drop(reverse[d], axis=1, inplace=True)
+    for d in dropsRows:
+        corrs.drop(reverse[d], axis=1, inplace=True)
     
     # Remove the node winds and temps
     threes = list(df.columns.values)
@@ -72,8 +72,8 @@ def scatter_seaborn_returner(dfs, listo, con, reverse):
         corrs.drop(t, axis=1, inplace=True)
     
     # This one is different for some reason
-    #corrs.drop("06D", axis=0, inplace=True)
-    #corrs.drop("06D", axis=1, inplace=True)
+    corrs.drop("06D", axis=0, inplace=True)
+    corrs.drop("06D", axis=1, inplace=True)
 
     # Generate and return the heatmap
     ax = sns.heatmap(corrs, annot=True)
