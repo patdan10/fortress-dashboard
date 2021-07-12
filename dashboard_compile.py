@@ -44,14 +44,14 @@ def compile(df, listo, maxes, mins):
 
     for k in list(maxes.keys()):
         temp[k] = maxes[k].squeeze()
-    maxes = temp.copy().sort_values(by=['HiCongestRT']).reset_index(drop=True)
+    maxes = temp.copy().sort_values(by=['HiCongestRT'])
     maxes['PriceDate'] = maxes['PriceDate'].map(lambda x: x.strftime("%d/%m/%y "))
     maxes.columns = ['Date', 'Hour', 'MCC', 'Node', 'Constraint']
 
     temp = pd.DataFrame()
     for k in list(mins.keys()):
         temp[k] = mins[k].squeeze()
-    mins = temp.copy().sort_values(by=['LoCongestRT']).reset_index(drop=True)
+    mins = temp.copy().sort_values(by=['LoCongestRT'])
     mins['PriceDate'] = mins['PriceDate'].map(lambda x: x.strftime("%d/%m/%y "))
     mins.columns = ['Date', 'Hour', 'MCC', 'Node', 'Constraint']
 
@@ -76,20 +76,22 @@ def compile(df, listo, maxes, mins):
         st.header("Constraint Selector")
         
         # Choose based on regex
-        conOption = st.selectbox(
-            "Which Constraint?",
+        conOptionX = st.selectbox(
+            "Which Constraint On X?",
             listOfNodes
         )
 
         st.write("The Top Five MCC Values")
-        maxes = maxes.loc[maxes['Constraint'] == conOption]
+        maxes = maxes.loc[maxes['Constraint'] == conOptionX]
+        maxes.iloc[::-1].reset_index(drop=True, inplace=True)
         st.write(maxes)
 
         st.write("The Bottom Five MCC Values")
-        mins = mins.loc[mins['Constraint'] == conOption]
+        mins = mins.loc[mins['Constraint'] == conOptionX]
+        mins.reset_index(drop=True, inplace=True)
         st.write(mins)
 
-        conOption = consDict[conOption]
+        conOptionX = consDict[conOptionX]
 
         st.markdown('##')
 
@@ -110,7 +112,19 @@ def compile(df, listo, maxes, mins):
                 "Which Node on X?",
                 nodes) + dataOptionX
 
-        st.write(df[conOption][dataOptionX])
+        st.write(df[conOptionX][dataOptionX])
+        
+        
+        
+        maxesAndMins = []
+        maxesAndMins.append(maxes.iloc[0]['Constraint'])
+        mins.append(maxes.iloc[0]['Constraint'])
+        
+        # Choose based on regex
+        conOptionY = st.selectbox(
+            "Which Constraint On Y?",
+            maxesAndMins
+        )
         
         # Same thing on Y
         st.subheader("Select Y Values")
@@ -127,7 +141,7 @@ def compile(df, listo, maxes, mins):
                 "Which Node on Y?",
                 nodes) + dataOptionY
 
-        st.write(df[conOption][dataOptionY])
+        st.write(df[conOptionY][dataOptionY])
 
         st.markdown('##')
 
@@ -146,7 +160,7 @@ def compile(df, listo, maxes, mins):
         ags = []
         
         # Do you want to filter
-        agree1 = st.checkbox("Do you want to filter?")
+        agree1 = st.checkbox("Do you want to filter X?")
         dataOptionFilter1 = None
         direction1 = None
         limit1 = None
@@ -155,17 +169,17 @@ def compile(df, listo, maxes, mins):
         if agree1:
             # Chose Filter
             dataOptionFilterBefore1 = st.selectbox(
-                "Which Data To Filter?",
+                "Which X Data To Filter?",
                 list(colsDict.keys())
             )
 
             dataOptionFilter1 = colsDict[dataOptionFilterBefore1]
 
-            st.write(df[conOption][dataOptionFilter1].sort_values())
+            st.write(df[conOptionX][dataOptionFilter1].sort_values())
             
             # Pick the direction
             direction1 = st.selectbox(
-                "Which Direction?",
+                "Which X Direction?",
                 ("Greater Than", "Less Than", "Equal To")
             )
             
@@ -179,12 +193,12 @@ def compile(df, listo, maxes, mins):
             dis.append(direction1)
             ags.append(agree1)
 
-        df[conOption] = filter_handler(df[conOption], fis, lis, dis)
+        df[conOptionX] = filter_handler(df[conOptionX], fis, lis, dis)
 
         # If the first filter is active, ask for second filter
         agree2 = False
         if agree1:
-            agree2 = st.checkbox("Do you want to filter again?")
+            agree2 = st.checkbox("Do you want to filter X again?")
         dataOptionFilter2 = None
         direction2 = None
         limit2 = None
@@ -192,20 +206,20 @@ def compile(df, listo, maxes, mins):
         # Same as first
         if agree2:
             dataOptionFilterBefore2 = st.selectbox(
-                "Which Data To Filter Again?",
+                "Which X Data To Filter Again?",
                 list(colsDict.keys())
             )
 
             dataOptionFilter2 = colsDict[dataOptionFilterBefore2]
 
-            st.write(df[conOption][dataOptionFilter2].sort_values())
+            st.write(df[conOptionX][dataOptionFilter2].sort_values())
 
             direction2 = st.selectbox(
-                "Which Direction Again?",
+                "Which X Direction Again?",
                 ("Greater Than", "Less Than", "Equal To")
             )
 
-            limit2 = st.number_input("Limit Again: ")
+            limit2 = st.number_input("Limit X Again: ")
 
         if agree2:
             fis.append(dataOptionFilter2)
@@ -213,31 +227,31 @@ def compile(df, listo, maxes, mins):
             dis.append(direction2)
             ags.append(agree2)
 
-        df[conOption] = filter_handler(df[conOption], fis, lis, dis)
+        df[conOptionX] = filter_handler(df[conOptionX], fis, lis, dis)
         
         # Third Filter
         agree3 = False
         if agree2:
-            agree3 = st.checkbox("Do you want to filter a third time?")
+            agree3 = st.checkbox("Do you want to filter X a third time?")
         dataOptionFilter3 = None
         direction3 = None
         limit3 = None
         if agree3:
             dataOptionFilterBefore3 = st.selectbox(
-                "Which Data To Filter A Third Time?",
+                "Which X Data To Filter A Third Time?",
                 list(colsDict.keys())
             )
 
             dataOptionFilter3 = colsDict[dataOptionFilterBefore3]
 
-            st.write(df[conOption][dataOptionFilter3].sort_values())
+            st.write(df[conOptionX][dataOptionFilter3].sort_values())
 
             direction3 = st.selectbox(
-                "Which Direction A Third Time?",
+                "Which X Direction A Third Time?",
                 ("Greater Than", "Less Than", "Equal To")
             )
 
-            limit3 = st.number_input("Limit A Third Time: ")
+            limit3 = st.number_input("Limit X A Third Time: ")
 
         if agree3:
             fis.append(dataOptionFilter3)
@@ -245,31 +259,31 @@ def compile(df, listo, maxes, mins):
             dis.append(direction3)
             ags.append(agree3)
 
-        df[conOption] = filter_handler(df[conOption], fis, lis, dis)
+        df[conOptionX] = filter_handler(df[conOptionX], fis, lis, dis)
         
         # Fourth Filtere
         agree4 = False
         if agree3:
-            agree4 = st.checkbox("Do you want to filter a fourth time?")
+            agree4 = st.checkbox("Do you want to filter X a fourth time?")
         dataOptionFilter4 = None
         direction4 = None
         limit4 = None
         if agree4:
             dataOptionFilterBefore4 = st.selectbox(
-                "Which Data To Filter A Fourth Time?",
+                "Which X Data To Filter A Fourth Time?",
                 list(colsDict.keys())
             )
 
             dataOptionFilter4 = colsDict[dataOptionFilterBefore4]
 
-            st.write(df[conOption][dataOptionFilter4].sort_values())
+            st.write(df[conOptionX][dataOptionFilter4].sort_values())
 
             direction4 = st.selectbox(
-                "Which Direction A Fourth Time?",
+                "Which X Direction A Fourth Time?",
                 ("Greater Than", "Less Than", "Equal To")
             )
 
-            limit4 = st.number_input("Limit A Fourth Time: ")
+            limit4 = st.number_input("Limit X A Fourth Time: ")
 
         if agree4:
             fis.append(dataOptionFilter4)
@@ -277,21 +291,21 @@ def compile(df, listo, maxes, mins):
             dis.append(direction4)
             ags.append(agree4)
 
-        df[conOption] = filter_handler(df[conOption], fis, lis, dis)
+        df[conOptionX] = filter_handler(df[conOptionX], fis, lis, dis)
         
         # Get the scatter plot
-        plot, reg, tdf = constraints_factors.scatter_matplot_returner(df, listo, conOption, dataOptionX, dataOptionY, fis, lis, dis)
+        plot, reg, tdf = constraints_factors.scatter_matplot_returner(df, listo, conOptionX, dataOptionX, dataOptionY, fis, lis, dis)
         st.write(reg)
         st.markdown('##')
         st.pyplot(plot)
 
         # Setup for Seaborn
-        df[conOption] = tdf
+        df[conOptionX] = tdf
         df[conOption].rename(columns=reverse_dict, inplace=True)
         
         # If data, then get seaborb
-        if len(df[conOption]) > 1:
-            plot2 = constraints_factors.scatter_seaborn_returner(df, listo, conOption, reverse_dict)
+        if len(df[conOptionX]) > 1:
+            plot2 = constraints_factors.scatter_seaborn_returner(df, listo, conOptionX, reverse_dict)
             st.markdown('##')
             st.pyplot(plot2)
 
