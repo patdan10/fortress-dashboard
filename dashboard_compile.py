@@ -10,8 +10,6 @@ import dashboard_factors
 
 # Compile the dashboard
 def compile(items):
-    for i in range(len(items)):
-        items[i] = items[i].head(15)
     cons_info = items[0]
     nodes_info = items[1]
     weather = items[2]
