@@ -23,7 +23,7 @@ def main():
     print("one")
     output = dashboard_db_pull.get_con_data()
     print("two")
-    output = constraints_data_formatter.format(output)
+    output = dashboard_data_formatter.format(output)
     print("three")
     output = dashboard_db_pull.get_more_nodes_data(output)
     print("FOUR")
