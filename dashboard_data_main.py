@@ -1,4 +1,4 @@
-import dashboard_db_pull, pandas as pd, os, time
+import dashboard_db_pull, dashboard_data_formatter, pandas as pd, os, time
 import openpyxl, psycopg2
 from datetime import datetime, timedelta
 import os
