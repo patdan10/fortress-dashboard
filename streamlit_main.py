@@ -1,4 +1,4 @@
-import dashboard_compile, sys
+import dashboard_compile
 
 def main():
     dashboard_compile.compile()
