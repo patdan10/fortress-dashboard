@@ -10,7 +10,7 @@ def compile():
 
     # If password, enter the dataframe
     password = st.text_input("Password: ")
-    if password == "constraint123" or True:
+    if password == "constraint123":
         listOfNodes = []
         consDict = {}
 
