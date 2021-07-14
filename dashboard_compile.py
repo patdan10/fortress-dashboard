@@ -23,7 +23,7 @@ def compile():
         row = cons.loc[cons['Cons_name'] == conSelect]
         st.write(row.iloc[:, [2,7,8]])
 
-        st.markdown('########')
+        st.markdown('######')
         
         # Choose based on regex
         dataSelectX = st.selectbox(
@@ -47,7 +47,7 @@ def compile():
             nodeSelectX = "All"
             dataX = weather_temperature_pull.get_information(dataSelectX)
         
-        st.markdown('########')
+        st.markdown('######')
 
         # Choose based on regex
         dataSelectY = st.selectbox(
