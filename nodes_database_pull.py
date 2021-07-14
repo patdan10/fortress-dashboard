@@ -1,6 +1,5 @@
 import psycopg2
 import pandas as pd
-from datetime import datetime
 
 def get_node_names():
     cols = ['Node_ID', 'NodeName']
