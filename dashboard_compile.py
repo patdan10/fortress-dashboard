@@ -2,17 +2,14 @@ import pandas as pd, streamlit as st
 import congestion_database_pull, nodes_database_pull, dashboard_graph_creator, weather_temperature_pull
 
 def compile():
-    print("HALO")
-    cons = congestion_database_pull.get_constraints()
-    nodes = nodes_database_pull.get_node_names()
     nodeOptions = ['Load', 'Temperature', 'Region 1 Wind', 'Region 2 Wind', 'Region 3 Wind', 'Region 4 Wind', 'Region 5 Wind', 'Sum of All Wind', 'DALMP', 'DAMCC', 'DAMCL', 'RTLMP', 'RTMCC', 'RTMCL']
     nodeExclusive = ['DALMP', 'DAMCC', 'DAMCL', 'RTLMP', 'RTMCC', 'RTMCL']
 
     # If password, enter the dataframe
     password = st.text_input("Password: ")
     if password == "constraint123":
-        listOfNodes = []
-        consDict = {}
+        cons = congestion_database_pull.get_constraints()
+        nodes = nodes_database_pull.get_node_names()
 
         st.title("Constraints Data Visualizer")
 
