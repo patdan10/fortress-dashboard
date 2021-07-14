@@ -1,7 +1,4 @@
-import pandas as pd
-import numpy as np
-import random
-random.seed(4000)
+
 
 def format(df):
     df = remove_blanks(df)
