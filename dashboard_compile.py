@@ -45,7 +45,8 @@ def compile():
         else:
             nodeSelectX = "All"
             dataX = weather_temperature_pull.get_information(dataSelectX)
-
+        
+        st.markdown('###')
 
         # Choose based on regex
         dataSelectY = st.selectbox(
