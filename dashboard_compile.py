@@ -1,5 +1,6 @@
 import pandas as pd, streamlit as st
 import congestion_database_pull, nodes_database_pull, dashboard_graph_creator, weather_temperature_pull
+from streamlit import caching
 
 def compile():
     nodeOptions = ['Load', 'Station Temperature', 'Station Wind', 'Region 1 Wind', 'Region 2 Wind', 'Region 3 Wind', 'Region 4 Wind', 'Region 5 Wind', 'Sum of All Wind', 'DA-RT', 'RT-DA', 'Spread']
@@ -194,3 +195,4 @@ def compile():
             dataSelectY += '_y'
         plot = dashboard_graph_creator.scatter_matplot_returner(frame[dataSelectX], frame[dataSelectY], nodeSelectX, nodeSelectY, dataSelectX, dataSelectY)
         st.pyplot(plot)
+        caching.clear_cache()
