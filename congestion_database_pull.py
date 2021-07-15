@@ -1,7 +1,9 @@
 import psycopg2
 import pandas as pd
 import data_formatter
+import streamlit as st
 
+@st.cache(suppress_st_warning=True)
 def get_constraints():
     cols = ['PriceDate', 'Hour', 'Cons_name', 'Shadow']
     # Set up connection
@@ -26,7 +28,7 @@ def get_constraints():
     return formatted
 
 # GETTERS
-
+@st.cache(suppress_st_warning=True)
 def get_minimaxes(date, hour):
     conn = psycopg2.connect(dbname='ISO', user='pdanielson', password='davidson456', host='fortdash.xyz')
     cur = conn.cursor()
@@ -38,7 +40,7 @@ def get_minimaxes(date, hour):
 
     return nodes
 
-
+@st.cache(suppress_st_warning=True)
 def get_min_max_congestion(date, hour, cur):
     maxTemps = ['PriceDate', 'Hour', 'MaximumMCC']
     comm = """SELECT p.pricedate, p.hour, p.rtmcc
@@ -71,7 +73,7 @@ def get_min_max_congestion(date, hour, cur):
     mins.sort_values(by=['PriceDate', 'Hour'], inplace=True)
     return [maxes, mins]
 
-
+@st.cache(suppress_st_warning=True)
 def get_min_max_nodes(formatted, cur):
     mc = formatted.columns[-1]
     allExtremes = pd.DataFrame(columns=['PriceDate', 'Hour', mc, 'Node'])
@@ -92,6 +94,7 @@ def get_min_max_nodes(formatted, cur):
     return allExtremes
 
 # Make string for use with sql statements
+@st.cache(suppress_st_warning=True)
 def make_string_prices_hours(dates, table):
     string = "("
 
