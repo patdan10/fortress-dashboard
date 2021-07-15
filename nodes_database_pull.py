@@ -21,7 +21,6 @@ def get_node_names():
     conn.close()
     return df
 
-@st.cache(suppress_st_warning=True)
 def get_node_info(node, datapoint, name):
     cols = ['PriceDate', 'Hour', name]
     # Set up connection
