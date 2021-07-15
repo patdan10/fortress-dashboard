@@ -2,7 +2,6 @@ import psycopg2
 import pandas as pd
 import streamlit as st
 
-@st.cache(suppress_st_warning=True)
 def get_information(nodeSelect):
     if nodeSelect == 'Load':
         return get_load()
@@ -31,7 +30,6 @@ def get_load():
     return df
 
 # Get the loads at the nodes for the constraints0-p[o0
-@st.cache(suppress_st_warning=True)
 def get_region(region):
     conn = psycopg2.connect(dbname='ISO', user='pdanielson', password='davidson456', host='fortdash.xyz')
     cur = conn.cursor()
@@ -50,7 +48,6 @@ def get_region(region):
     df.columns = cols
     return df
 
-@st.cache(suppress_st_warning=True)
 def get_wind(iem):
     # Set up connection
     conn = psycopg2.connect(dbname='ISO', user='pdanielson', password='davidson456', host='fortdash.xyz')
@@ -91,7 +88,6 @@ def get_wind_sum():
     conn.close()
     return df
 
-@st.cache(suppress_st_warning=True)
 def get_temperature(iem):
     # Set up connection
     conn = psycopg2.connect(dbname='ISO', user='pdanielson', password='davidson456', host='fortdash.xyz')
