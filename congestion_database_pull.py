@@ -40,7 +40,6 @@ def get_minimaxes(date, hour):
 
     return nodes
 
-@st.cache(suppress_st_warning=True)
 def get_min_max_congestion(date, hour, cur):
     maxTemps = ['PriceDate', 'Hour', 'MaximumMCC']
     comm = """SELECT p.pricedate, p.hour, p.rtmcc
@@ -73,7 +72,6 @@ def get_min_max_congestion(date, hour, cur):
     mins.sort_values(by=['PriceDate', 'Hour'], inplace=True)
     return [maxes, mins]
 
-@st.cache(suppress_st_warning=True)
 def get_min_max_nodes(formatted, cur):
     mc = formatted.columns[-1]
     allExtremes = pd.DataFrame(columns=['PriceDate', 'Hour', mc, 'Node'])
@@ -92,14 +90,3 @@ def get_min_max_nodes(formatted, cur):
             allExtremes = pd.concat([allExtremes, temp])
 
     return allExtremes
-
-# Make string for use with sql statements
-@st.cache(suppress_st_warning=True)
-def make_string_prices_hours(dates, table):
-    string = "("
-
-    # For each date, make it an available option
-    for d in dates:
-        string += "(" + table + ".pricedate = '" + d[0].strftime("%Y-%m-%d") + "' AND " + table + ".hour = " + str(d[1]) +") OR "
-    string = string[:-4] + ")"
-    return string
