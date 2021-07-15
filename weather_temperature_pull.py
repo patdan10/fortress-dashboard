@@ -10,7 +10,6 @@ def get_information(nodeSelect):
     else:
         return get_region(nodeSelect.split(" ")[1])
 
-@st.cache(suppress_st_warning=True)
 def get_load():
     conn = psycopg2.connect(dbname='ISO', user='pdanielson', password='davidson456', host='fortdash.xyz')
     cur = conn.cursor()
@@ -68,7 +67,6 @@ def get_wind(iem):
     conn.close()
     return df
 
-@st.cache(suppress_st_warning=True)
 def get_wind_sum():
     # Set up connection
     conn = psycopg2.connect(dbname='ISO', user='pdanielson', password='davidson456', host='fortdash.xyz')
