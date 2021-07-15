@@ -19,8 +19,8 @@ def get_node_names():
     conn.close()
     return df
 
-def get_node_info(node, datapoint):
-    cols = ['PriceDate', 'Hour', datapoint]
+def get_node_info(node, datapoint, name):
+    cols = ['PriceDate', 'Hour', name]
     # Set up connection
     conn = psycopg2.connect(dbname='ISO', user='pdanielson', password='davidson456', host='fortdash.xyz')
     cur = conn.cursor()
