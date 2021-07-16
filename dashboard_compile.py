@@ -12,7 +12,7 @@ def compile():
 
     # If password, enter the dataframe
     password = st.text_input("Password: ")
-    if password == "constraint123" or True:
+    if password == "constraint123":
         cons = congestion_database_pull.get_constraints()
         nodes = nodes_database_pull.get_node_names()
         iems = weather_temperature_pull.get_iems().sort_values(by='IEMs')
