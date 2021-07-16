@@ -32,8 +32,8 @@ def compile():
         st.write(minimaxes[1])
         st.write(minimaxes[0])
 
-        pt1 = minimaxes[0]['Node'].values.tolist()
-        pt2 = minimaxes[1]['Node'].values.tolist()
+        pt1 = minimaxes[1]['Node'].values.tolist()
+        pt2 = minimaxes[0]['Node'].values.tolist()
         allNodes = nodes['NodeName'].copy()
         allNodes.sort_values(inplace=True)
         allNodes = list(allNodes)
