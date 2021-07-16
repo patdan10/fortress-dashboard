@@ -12,10 +12,10 @@ def compile():
 
     # If password, enter the dataframe
     password = st.text_input("Password: ")
-    if password == "constraint123" or True:
+    if password == "constraint123":
         cons = congestion_database_pull.get_constraints()
         nodes = nodes_database_pull.get_node_names()
-        iems = weather_temperature_pull.get_iems()
+        iems = weather_temperature_pull.get_iems().sort_values()
 
         st.title("Constraints Data Visualizer")
 
@@ -24,13 +24,13 @@ def compile():
         # Choose based on regex
         conSelect = st.selectbox(
             "Which Constraint?",
-            cons['Cons_name']
+            cons['Cons_name'].sort_values()
         )
         row = cons.loc[cons['Cons_name'] == conSelect]
         minimaxes = congestion_database_pull.get_minimaxes(row['PriceDate'].iloc[0], (row['Hour'].iloc[0].item()))
 
-        st.write(minimaxes[0])
         st.write(minimaxes[1])
+        st.write(minimaxes[0])
 
         pt1 = minimaxes[0]['Node'].values.tolist()
         pt2 = minimaxes[1]['Node'].values.tolist()
