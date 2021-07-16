@@ -15,7 +15,7 @@ def compile():
     if password == "constraint123":
         cons = congestion_database_pull.get_constraints()
         nodes = nodes_database_pull.get_node_names()
-        iems = weather_temperature_pull.get_iems().sort_values()
+        iems = weather_temperature_pull.get_iems().sort_values(by='IEMs')
 
         st.title("Constraints Data Visualizer")
 
@@ -24,7 +24,7 @@ def compile():
         # Choose based on regex
         conSelect = st.selectbox(
             "Which Constraint?",
-            cons['Cons_name'].sort_values()
+            cons['Cons_name'].sort_values('Cons_name')
         )
         row = cons.loc[cons['Cons_name'] == conSelect]
         minimaxes = congestion_database_pull.get_minimaxes(row['PriceDate'].iloc[0], (row['Hour'].iloc[0].item()))
