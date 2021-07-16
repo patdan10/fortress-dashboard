@@ -3,16 +3,17 @@ import pandas as pd
 import streamlit as st
 
 tables = {'Region 1 Wind': 'rfrz_actual', 'Region 2 Wind': 'rfrz_actual', 'Region 3 Wind': 'rfrz_actual',
-          'Region 4 Wind': 'rfrz_actual', 'Region 5 Wind': 'rfrz_actual'}
+          'Region 4 Wind': 'rfrz_actual', 'Region 5 Wind': 'rfrz_actual', 'DALMP': 'prices'}
 
 dps = {'Region 1 Wind': 'rfrz_actual.value', 'Region 2 Wind': 'rfrz_actual.value', 'Region 3 Wind': 'rfrz_actual.value',
-          'Region 4 Wind': 'rfrz_actual.value', 'Region 5 Wind': 'rfrz_actual.value'}
+          'Region 4 Wind': 'rfrz_actual.value', 'Region 5 Wind': 'rfrz_actual.value', 'DALMP': 'DALMP'}
 
 endings = {'Region 1 Wind': " AND rfrz_actual.reserve_zone=1 AND rfrz_actual.resource='wind' AND rfrz_actual.pricedate >= '2020-01-01'",
             'Region 2 Wind': " AND rfrz_actual.reserve_zone=2 AND rfrz_actual.resource='wind' AND rfrz_actual.pricedate >= '2020-01-01'",
             'Region 3 Wind': " AND rfrz_actual.reserve_zone=3 AND rfrz_actual.resource='wind' AND rfrz_actual.pricedate >= '2020-01-01'",
             'Region 4 Wind': " AND rfrz_actual.reserve_zone=4 AND rfrz_actual.resource='wind' AND rfrz_actual.pricedate >= '2020-01-01'",
-            'Region 5 Wind': " AND rfrz_actual.reserve_zone=5 AND rfrz_actual.resource='wind' AND rfrz_actual.pricedate >= '2020-01-01'"}
+            'Region 5 Wind': " AND rfrz_actual.reserve_zone=5 AND rfrz_actual.resource='wind' AND rfrz_actual.pricedate >= '2020-01-01'",
+           'DALMP': ''}
 
 # Station Temp, Station Wind, Sum of Winds
 
@@ -41,6 +42,8 @@ def filter_helper(datapoint, direct, limit, iem):
     if len(df) != 0:
         df.columns = cols
         df.dropna(axis=0, how='any', inplace=True)
+        if datapoint == 'DALMP':
+            df['PriceDate'] = df['PriceDate'].map(lambda x: x.date())
     return df
 
 
@@ -68,6 +71,13 @@ def commMaker(datapoint, direct, limit, iem):
                 WHERE genmix.pricedate >= '2020-01-01'
                 GROUP BY pricedate, hour
                 HAVING AVG(genmix.average_actual_load)""" + str(direct) + str(limit)
+    elif 'DALMP' in datapoint:
+        comm = """SELECT prices.pricedate, prices.hour
+                FROM prices
+                JOIN nodes ON nodes.node_id = prices.node_id
+                WHERE DALMP""" + str(direct) + str(limit) + """
+                AND nodes.nodename = '""" + iem + """'
+                AND prices.pricedate >= '2020-01-01'"""
     else:
         comm = """SELECT pricedate, hour FROM """ + str(tables[datapoint]) + """
                 WHERE """ + str(dps[datapoint]) + str(direct) + str(limit) + str(endings[datapoint])
