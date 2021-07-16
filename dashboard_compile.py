@@ -7,12 +7,12 @@ from streamlit import caching
 
 def compile():
     nodeOptions = ['Load', 'Station Temperature', 'Station Wind', 'Region 1 Wind', 'Region 2 Wind', 'Region 3 Wind', 'Region 4 Wind', 'Region 5 Wind', 'Sum of All Wind', 'DA-RT', 'RT-DA', 'Spread']
-    nodeExclusive = ['DA-RT', 'RT-DA']
-    components = {'DA-RT': ['DALMP', 'RTLMP'], 'RT-DA': ['RTLMP', 'DALMP'], 'Spread': ['DALMP', 'RTLMP', 'RTLMP', 'DALMP']}
+    nodeExclusive = ['DA-RT', 'RT-DA', 'DALMP']
+    components = {'DA-RT': ['DALMP', 'RTLMP'], 'RT-DA': ['RTLMP', 'DALMP'], 'Spread': ['DALMP', 'RTLMP', 'RTLMP', 'DALMP'], 'DALMP': ['DALMP']}
 
     # If password, enter the dataframe
     password = st.text_input("Password: ")
-    if password == "constraint123":
+    if password == "constraint123" or True:
         cons = congestion_database_pull.get_constraints()
         nodes = nodes_database_pull.get_node_names()
         iems = weather_temperature_pull.get_iems().sort_values(by='IEMs')
@@ -58,7 +58,7 @@ def compile():
         st.subheader("X Data Filter")
         doFilter = st.checkbox("Do you want to filter X?")
         if doFilter:
-            tempy = filter(dataX, nodeOptions, "X", iems, nodeExclusive, allNodes, components, nodes)
+            tempy = filter(dataX, nodeOptions+['DALMP'], "X", iems, nodeExclusive, allNodes, components, nodes)
             if len(tempy) == 0:
                 st.write("No Filter")
             else:
@@ -78,7 +78,7 @@ def compile():
         st.subheader("Y Data Filter")
         doFilter = st.checkbox("Do you want to filter Y?")
         if doFilter:
-            tempy = filter(dataY, nodeOptions, "Y", iems, nodeExclusive, allNodes, components, nodes)
+            tempy = filter(dataY, nodeOptions+['DALMP'], "Y", iems, nodeExclusive, allNodes, components, nodes)
             if len(tempy) == 0:
                 st.write("No Filter")
             else:
@@ -124,7 +124,6 @@ def info_picker(nodeOptions, iems, nodeExclusive, allNodes, components, nodes, p
             "Which IEM for Wind for " + point + "?",
             iems
         )
-        print("HELLO")
         data = weather_temperature_pull.get_wind(nodeSelect)
     elif dataSelect in nodeExclusive:
         nodeSelect = st.selectbox(
@@ -181,7 +180,7 @@ def info_picker(nodeOptions, iems, nodeExclusive, allNodes, components, nodes, p
 
 def filter(data, nodeOptions, point, iems, nodeExclusive, allNodes, components, nodes):
     # FILTER STUFF
-    node, toShow, dataName = info_picker(nodeOptions[:-3], iems, nodeExclusive, allNodes, components, nodes, "Filter " + point)
+    node, toShow, dataName = info_picker(nodeOptions[:-4]+[nodeOptions[-1]], iems, nodeExclusive, allNodes, components, nodes, "Filter " + point)
     st.write(toShow[dataName].dropna(axis=0, how='any').sort_values().reset_index(drop=True))
 
     direction = st.selectbox(
