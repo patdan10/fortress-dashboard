@@ -24,7 +24,7 @@ def compile():
         # Choose based on regex
         conSelect = st.selectbox(
             "Which Constraint?",
-            cons['Cons_name'].sort_values('Cons_name')
+            cons['Cons_name'].sort_values()
         )
         row = cons.loc[cons['Cons_name'] == conSelect]
         minimaxes = congestion_database_pull.get_minimaxes(row['PriceDate'].iloc[0], (row['Hour'].iloc[0].item()))
