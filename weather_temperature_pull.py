@@ -75,11 +75,11 @@ def get_wind_sum():
     cols = ['PriceDate', 'Hour', 'Sum of All Wind']
 
     # Execute SQL statement to get constraints and shadows
-    comm = """SELECT iso_utc.pricedate_spp, iso_utc.hour_spp, SUM(actual.wind_speed)
-                FROM weather.actual
-                JOIN weather.iso_utc ON iso_utc.dt = actual.dt
-                WHERE iso_utc.pricedate_spp >= '2020-01-01'
-                GROUP BY iso_utc.pricedate_spp, iso_utc.hour_spp"""
+    comm = """SELECT r.pricedate, r.hour, SUM(r.value)
+                FROM rfrz_actual r
+                WHERE r.pricedate >= '2020-01-01'
+                AND r.resource='wind'
+                GROUP BY r.pricedate, r.hour"""
     cur.execute(comm)
     out = cur.fetchall()
     df = pd.DataFrame(data=out)
