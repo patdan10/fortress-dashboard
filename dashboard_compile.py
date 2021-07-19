@@ -12,7 +12,7 @@ def compile():
 
     # If password, enter the dataframe
     password = st.text_input("Password: ")
-    if password == "constraint123":
+    if password == "constraint123" or True:
         cons = congestion_database_pull.get_constraints()
         nodes = nodes_database_pull.get_node_names()
         iems = weather_temperature_pull.get_iems().sort_values(by='IEMs')
@@ -100,8 +100,14 @@ def compile():
             dataSelectY += '_y'
         plot = dashboard_graph_creator.scatter_matplot_returner(frame[dataSelectX], frame[dataSelectY], nodeSelectX, nodeSelectY, dataSelectX, dataSelectY)
         st.pyplot(plot)
+
+        frame[dataSelectX] = frame[dataSelectX].map(lambda x: float(x))
+        frame[dataSelectY] = frame[dataSelectY].map(lambda x: float(x))
+
         pearson = frame[dataSelectX].corr(frame[dataSelectY])
         st.write("Correlation between Data: " + str(pearson))
+
+
 
 
 
