@@ -100,8 +100,8 @@ def compile():
             dataSelectY += '_y'
         plot = dashboard_graph_creator.scatter_matplot_returner(frame[dataSelectX], frame[dataSelectY], nodeSelectX, nodeSelectY, dataSelectX, dataSelectY)
         st.pyplot(plot)
-
-
+        pearson = frame[dataSelectX].corr(frame[dataSelectY])
+        st.write("Correlation between Data:" + str(pearson))
 
 
 
