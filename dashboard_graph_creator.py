@@ -1,4 +1,5 @@
 from matplotlib import pyplot as plt
+import numpy as np
 # Return the scatterplot with the correct axes and filters
 def scatter_matplot_returner(dataX, dataY, nodeOptionX, nodeOptionY, dataOptionX, dataOptionY):
     dataX = dataX.map(lambda x: float(x))
