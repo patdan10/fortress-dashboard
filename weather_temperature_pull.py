@@ -3,7 +3,16 @@ import pandas as pd
 import streamlit as st
 
 def get_information(nodeSelect):
-    if nodeSelect == 'Load':
+    if nodeSelect == 'Net Demand':
+        load = get_load()
+        wind = get_wind_sum()
+        demand = pd.merge(load, wind, how='left', on=['PriceDate', 'Hour'])
+        demand.dropna(axis=0, how='any', inplace=True)
+        demand['Net Demand'] = demand['Load'] - demand['Sum of All Wind']
+        demand.drop('Load', axis=1, inplace=True)
+        demand.drop('Sum of All Wind', axis=1, inplace=True)
+        return demand
+    elif nodeSelect == 'Load':
         return get_load()
     elif 'Sum' in nodeSelect:
         return get_wind_sum()
