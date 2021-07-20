@@ -6,9 +6,10 @@ from streamlit import caching
 # 'Sum of All Wind', 
 
 def compile():
-    nodeOptions = ['Load', 'Station Temperature', 'Station Wind', 'Region 1 Wind', 'Region 2 Wind', 'Region 3 Wind', 'Region 4 Wind', 'Region 5 Wind', 'Sum of All Wind', 'DA-RT', 'RT-DA', 'Spread']
+    nodeOptions = ['Load', 'Station Temperature', 'Station Wind', 'Region 1 Wind', 'Region 2 Wind', 'Region 3 Wind', 'Region 4 Wind', 'Region 5 Wind', 'Sum of All Wind', 'DA-RT', 'RT-DA', 'Spread', 'Net Demand']
     nodeExclusive = ['DA-RT', 'RT-DA', 'DALMP']
     components = {'DA-RT': ['DALMP', 'RTLMP'], 'RT-DA': ['RTLMP', 'DALMP'], 'Spread': ['DALMP', 'RTLMP', 'RTLMP', 'DALMP'], 'DALMP': ['DALMP']}
+    colors = [[0,0.247,0.361],[0.737,0.314,0.565],[1,0.388,0.380],[1,0.651,0]]
 
     # If password, enter the dataframe
     password = st.text_input("Password: ")
@@ -60,9 +61,6 @@ def compile():
             else:
                 dataX = tempy
 
-        st.subheader("X Data")
-        st.write(dataX[dataSelectX].sort_values().reset_index(drop=True))
-
 
 
         st.header("Y Data Selector")
@@ -77,9 +75,6 @@ def compile():
             else:
                 dataY = tempy
 
-        st.subheader("Y Data")
-        st.write(dataY[dataSelectY].sort_values().reset_index(drop=True))
-
 
 
         frame = pd.merge(dataX, dataY, how='left', on=['PriceDate', 'Hour'])
@@ -92,22 +87,18 @@ def compile():
         #COLOR GRADIANT
         doColor = st.checkbox("Do you want to color the points?")
         if doColor:
-            colorData = color_picker(allNodes, nodes, components)
+            colorData = color_picker(allNodes, nodes, components, colors)
             frame = pd.merge(frame, colorData, how='left', on=['PriceDate', 'Hour'])
             frame.dropna(axis=0, how='any', inplace=True)
-            maximum = float(frame['Color'].max())
-            minimum = float(frame['Color'].min())
-            frame['Color'] = frame['Color'].map(lambda x: float(x))
-            frame['Gradiant'] = ((frame['Color'] - minimum) * 255.0) / float(maximum-minimum)
         else:
             """gradiant = []
             step = 100.0/len(frame[dataSelectX])
             for i in range(len(frame[dataSelectX])):
                 gradiant.append(step*i)"""
-            frame['Gradiant'] = 0
+            frame['Color'] = 0
 
 
-        plot = dashboard_graph_creator.scatter_matplot_returner(frame[dataSelectX], frame[dataSelectY], nodeSelectX, nodeSelectY, dataSelectX, dataSelectY, frame['Gradiant'])
+        plot = dashboard_graph_creator.scatter_matplot_returner(frame[dataSelectX], frame[dataSelectY], nodeSelectX, nodeSelectY, dataSelectX, dataSelectY, frame['Color'], colors, doColor)
         st.pyplot(plot)
 
         frame[dataSelectX] = frame[dataSelectX].map(lambda x: float(x))
@@ -120,7 +111,7 @@ def compile():
 
 
 
-def color_picker(allNodes, nodes, components):
+def color_picker(allNodes, nodes, components, colors):
     dataSelect = st.selectbox(
         "Which datapoint to color by?",
         ("DA-RT", "RT-DA", "Spread")
@@ -169,7 +160,7 @@ def color_picker(allNodes, nodes, components):
             else:
                 temp = temp.rename(columns={dataSelect: 'Color'})
                 data["Color"] -= temp["Color"]
-
+    data['Color'] = data['Color'].map(lambda x: colors[0] if x < -2 else (colors[1] if x < 1 else (colors[2] if x < 5 else colors[3])))
     return data
 
 
