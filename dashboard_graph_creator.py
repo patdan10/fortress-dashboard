@@ -1,16 +1,16 @@
 from matplotlib import pyplot as plt
 import numpy as np
 # Return the scatterplot with the correct axes and filters
-def scatter_matplot_returner(dataX, dataY, nodeOptionX, nodeOptionY, dataOptionX, dataOptionY):
+def scatter_matplot_returner(dataX, dataY, nodeOptionX, nodeOptionY, dataOptionX, dataOptionY, gradiant):
     dataX = dataX.map(lambda x: float(x))
     dataY = dataY.map(lambda x: float(x))
-    
+
     # Generate unmarked chart
     fig, ax = plt.subplots()
     ax.axhline(y=0, lw=1.5, color='k')
     ax.axvline(x=0, lw=1.5, color='k')
 
-    plt.plot(dataX, dataY, 'o')
+    plt.scatter(x=dataX, y=dataY, s=3, c=gradiant)
     m = np.polyfit(dataX, dataY, 1)
     plt.plot(dataX, m[0] * dataX + m[1])
 
