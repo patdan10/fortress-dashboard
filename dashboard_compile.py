@@ -1,4 +1,4 @@
-import pandas as pd, streamlit as st
+ import pandas as pd, streamlit as st
 import congestion_database_pull, nodes_database_pull, dashboard_graph_creator, weather_temperature_pull, filter_finder
 from streamlit import caching
 
@@ -48,10 +48,6 @@ def compile():
 
 
 
-
-
-
-
         st.header("X Data Selector")
         nodeSelectX, dataX, dataSelectX = info_picker(nodeOptions, iems, nodeExclusive, allNodes, components, nodes, "X")
 
@@ -66,9 +62,6 @@ def compile():
 
         st.subheader("X Data")
         st.write(dataX[dataSelectX].sort_values().reset_index(drop=True))
-
-
-
 
 
 
@@ -89,16 +82,32 @@ def compile():
 
 
 
-
-
-
         frame = pd.merge(dataX, dataY, how='left', on=['PriceDate', 'Hour'])
         frame.dropna(axis=0, how='any', inplace=True)
 
         if dataSelectX == dataSelectY:
             dataSelectX += '_x'
             dataSelectY += '_y'
-        plot = dashboard_graph_creator.scatter_matplot_returner(frame[dataSelectX], frame[dataSelectY], nodeSelectX, nodeSelectY, dataSelectX, dataSelectY)
+
+        #COLOR GRADIANT
+        doColor = st.checkbox("Do you want to color the points?")
+        if doColor:
+            colorData = color_picker(allNodes, nodes, components)
+            frame = pd.merge(frame, colorData, how='left', on=['PriceDate', 'Hour'])
+            frame.dropna(axis=0, how='any', inplace=True)
+            maximum = float(frame['Color'].max())
+            minimum = float(frame['Color'].min())
+            frame['Color'] = frame['Color'].map(lambda x: float(x))
+            frame['Gradiant'] = ((frame['Color'] - minimum) * 255.0) / float(maximum-minimum)
+        else:
+            """gradiant = []
+            step = 100.0/len(frame[dataSelectX])
+            for i in range(len(frame[dataSelectX])):
+                gradiant.append(step*i)"""
+            frame['Gradiant'] = 0
+
+
+        plot = dashboard_graph_creator.scatter_matplot_returner(frame[dataSelectX], frame[dataSelectY], nodeSelectX, nodeSelectY, dataSelectX, dataSelectY, frame['Gradiant'])
         st.pyplot(plot)
 
         frame[dataSelectX] = frame[dataSelectX].map(lambda x: float(x))
@@ -106,7 +115,62 @@ def compile():
 
         pearson = frame[dataSelectX].corr(frame[dataSelectY])
         st.write("Correlation between Data: " + str(pearson))
+        st.write(frame)
 
+
+
+
+def color_picker(allNodes, nodes, components):
+    dataSelect = st.selectbox(
+        "Which datapoint to color by?",
+        ("DA-RT", "RT-DA", "Spread")
+    )
+
+    if dataSelect == 'Spread':
+        nodeSelectShort = st.selectbox(
+            "Which Node Long?",
+            allNodes
+        )
+        data = pd.DataFrame()
+        for bit in components['DA-RT']:
+            temp = nodes_database_pull.get_node_info(nodes.loc[nodes['NodeName'] == nodeSelectShort].iloc[0]['Node_ID'], bit, dataSelect)
+            if data.empty:
+                temp = temp.rename(columns={dataSelect: 'Color'})
+                data = temp
+            else:
+                temp = temp.rename(columns={dataSelect: 'Color'})
+                data["Color"] -= temp["Color"]
+
+        nodeSelectLong = st.selectbox(
+            "Which Node Short?",
+            allNodes
+        )
+        dataTemp = pd.DataFrame()
+        for bit in components['RT-DA']:
+            temp = nodes_database_pull.get_node_info(nodes.loc[nodes['NodeName'] == nodeSelectLong].iloc[0]['Node_ID'], bit, dataSelect)
+            if dataTemp.empty:
+                temp = temp.rename(columns={dataSelect: 'Color'})
+                dataTemp = temp
+            else:
+                temp = temp.rename(columns={dataSelect: 'Color'})
+                dataTemp["Color"] -= temp["Color"]
+        data["Color"] += dataTemp["Color"]
+    else:
+        nodeSelect = st.selectbox(
+            "Which Node?",
+            allNodes
+        )
+        data = pd.DataFrame()
+        for bit in components[dataSelect]:
+            temp = nodes_database_pull.get_node_info(nodes.loc[nodes['NodeName'] == nodeSelect].iloc[0]['Node_ID'],bit, dataSelect)
+            if data.empty:
+                temp = temp.rename(columns={dataSelect: 'Color'})
+                data = temp
+            else:
+                temp = temp.rename(columns={dataSelect: 'Color'})
+                data["Color"] -= temp["Color"]
+
+    return data
 
 
 
