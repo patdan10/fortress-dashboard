@@ -2,6 +2,7 @@ import psycopg2
 import pandas as pd
 import data_formatter
 import streamlit as st
+import datetime
 
 @st.cache(suppress_st_warning=True)
 def get_constraints():
@@ -14,8 +15,7 @@ def get_constraints():
     # Execute SQL statement to get constraints and shadows
     comm = """SELECT pricedate, hour, cons_name, shadow
             FROM rtbinds
-            WHERE pricedate >= '2021-07-05'
-            """
+            WHERE pricedate >= '""" + oldday.strftime("%Y-%m-%d") + "'"
     cur.execute(comm)
     out = cur.fetchall()
     formatted = pd.DataFrame(data=out)
