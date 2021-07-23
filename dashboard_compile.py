@@ -27,6 +27,7 @@ def compile():
             "Which Constraint?",
             cons['Cons_name'].sort_values()
         )
+        st.write(conSelect)
         row = cons.loc[cons['Cons_name'] == conSelect]
         st.write(cons)
         st.write("WOWOW")
