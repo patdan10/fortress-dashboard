@@ -28,6 +28,8 @@ def compile():
             cons['Cons_name'].sort_values()
         )
         row = cons.loc[cons['Cons_name'] == conSelect]
+        st.write(cons)
+        st.write("WOWOW")
         st.write(row)
         minimaxes = congestion_database_pull.get_minimaxes(row['PriceDate'].iloc[0], (row['Hour'].iloc[0].item()))
 
