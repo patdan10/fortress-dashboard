@@ -25,6 +25,7 @@ def get_constraints():
     formatted = data_formatter.format(formatted)
 
     formatted.drop_duplicates(subset=['Cons_name'], inplace=True)
+    formatted.sort_values(inplace=True, by='Cons_name')
     formatted.reset_index(inplace=True, drop=True)
     return formatted
 
