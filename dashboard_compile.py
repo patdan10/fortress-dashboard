@@ -25,7 +25,7 @@ def compile():
         # Choose based on regex
         conSelect = st.selectbox(
             "Which Constraint?",
-            cons['Cons_name'].sort_values()
+            cons['Cons_name']
         )
         st.write(conSelect)
         row = cons.loc[cons['Cons_name'] == conSelect]
