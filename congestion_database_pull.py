@@ -26,6 +26,7 @@ def get_constraints():
 
     formatted.drop_duplicates(subset=['Cons_name'], inplace=True)
     formatted.reset_index(inplace=True, drop=True)
+    print(formatted)
     return formatted
 
 # GETTERS
