@@ -4,6 +4,7 @@ import matplotlib.patches as mpatches
 import streamlit as st
 # Return the scatterplot with the correct axes and filters
 def scatter_matplot_returner(dataX, dataY, nodeOptionX, nodeOptionY, dataOptionX, dataOptionY, gradiant, colors, doColor):
+    # Map data to floats
     dataX = dataX.map(lambda x: float(x))
     dataY = dataY.map(lambda x: float(x))
 
@@ -11,10 +12,13 @@ def scatter_matplot_returner(dataX, dataY, nodeOptionX, nodeOptionY, dataOptionX
     fig, ax = plt.subplots()
     ax.axhline(y=0, lw=1.5, color='k')
     ax.axvline(x=0, lw=1.5, color='k')
-
+    
+    # Scatter the data and colors
     plt.scatter(x=dataX, y=dataY, s=3, c=gradiant)
+    #Make line of best fit
     totalm = np.polyfit(dataX, dataY, 1)
-
+       
+    # If splitter
     if doColor:
         xmax = 0
         xmin = 0
