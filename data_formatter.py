@@ -1,31 +1,20 @@
+import datetime
 
 def format(df):
-    df = remove_blanks(df)
-    df = cons_seperator(df)
-    return df
+    names, df = remove_blanks(df)
+    return names, df
 
 # Format dataframe for further calculations
-def remove_blanks(noBlanks):
+def remove_blanks(df):
+    oldday = datetime.datetime.today()-datetime.timedelta(days=14)
     # Remove zero shadow prices
-    df = noBlanks[noBlanks.Shadow != 0].copy()
-    # Copy PriceDate
-    df['PDCopy'] = df['PriceDate']
-
-    # Map PriceDate and Hour Together for Later Use
-    df['PDCopy'] = df['PDCopy'].map(lambda x: x.strftime("Day: %d/%m/%y Hour: "))
-    df['PDCopy'] = df['PDCopy'] + df['Hour'].map(lambda x: str(x))
-
-    # Drop Duplicates
-    df = df.drop_duplicates('PDCopy', keep=False)
-    df['PDCopy'] = df['Cons_name'] + " " + df['PDCopy']
-
+    df2 = df[df.Shadow != 0].copy()
+    df2 = df2[df2['PriceDate'] >= oldday.strftime("%Y-%m-%d")]
+    df2 = df2.Cons_name.unique()
+    df2.sort()
     # Recopy Pricedate Back and Drop Copy
+    df['Percentage'] = df['Shadow'] / df.groupby(['PriceDate', 'Hour'])['Shadow'].transform('sum')
+
     df.sort_values(by=['PriceDate', 'Hour'], inplace=True)
     df.reset_index(inplace=True, drop=True)
-    return df
-
-# Seperate constraints and make it into a dictionary
-def cons_seperator(df):
-    df['Cons_name'] = df['Cons_name'].map(lambda x: x.replace(" ", ""))
-    return df
-
+    return df2, df

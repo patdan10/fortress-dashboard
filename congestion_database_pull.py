@@ -8,7 +8,7 @@ import datetime
 @st.cache(suppress_st_warning=True)
 def get_constraints():
     # We only want from last two weeks
-    oldday = datetime.datetime.today()-datetime.timedelta(days=14)
+    oldday = datetime.datetime.today()-datetime.timedelta(days=365)
     cols = ['PriceDate', 'Hour', 'Cons_name', 'Shadow']
     # Set up connection
     conn = psycopg2.connect(dbname='ISO', user='pdanielson', password='davidson456', host='fortdash.xyz')
@@ -27,22 +27,21 @@ def get_constraints():
     formatted.columns = cols
     
     # Formatting of data. Drop duplicate days, and isolate days and timees of binding
-    formatted = data_formatter.format(formatted)
+    names, formatted = data_formatter.format(formatted)
     
     # Drop duplicates, and organize, and return
-    formatted.drop_duplicates(subset=['Cons_name'], inplace=True)
-    formatted.sort_values(inplace=True, by='Cons_name')
-    formatted.reset_index(inplace=True, drop=True)
-    return formatted
+    #names.sort_values(inplace=True, by='Cons_name')
+    #names.reset_index(inplace=True, drop=True)
+    return names, formatted
 
 # Get 5 min and 5 max of a given date and time, which is when it will be binding
-def get_minimaxes(date, hour):
+def get_minimaxes(row):
     conn = psycopg2.connect(dbname='ISO', user='pdanielson', password='davidson456', host='fortdash.xyz')
     cur = conn.cursor()
     cur.execute("SET search_path TO spp;")
     
     # Get congestions
-    nodes = get_min_max_congestion(date, hour, cur)
+    nodes = get_min_max_congestion(row['PriceDate'], row['Hour'], cur)
     
     # Match to node names
     for i in range(len(nodes)):
@@ -50,7 +49,7 @@ def get_minimaxes(date, hour):
 
     return nodes
 
-# Geet top 5 and bottom 5 congestions
+# Get top 5 and bottom 5 congestions
 def get_min_max_congestion(date, hour, cur):
     # Get maximums
     maxTemps = ['PriceDate', 'Hour', 'MaximumMCC']
@@ -69,7 +68,6 @@ def get_min_max_congestion(date, hour, cur):
     maxes = pd.DataFrame(data=out)
     maxes.columns = maxTemps
     maxes.sort_values(by=['PriceDate', 'Hour'], inplace=True)
-
     
     # Get minimums
     minTemps = ['PriceDate', 'Hour', 'MinimumMCC']

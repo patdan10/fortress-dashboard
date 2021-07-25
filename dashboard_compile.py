@@ -16,10 +16,10 @@ def compile():
     if password == "constraint123" or True:
         
         # Get the constraints, nodes, and iems, which are all cached
-        cons = congestion_database_pull.get_constraints()
+        cons, total = congestion_database_pull.get_constraints()
         nodes = nodes_database_pull.get_node_names()
         iems = weather_temperature_pull.get_iems().sort_values(by='IEMs')
-        
+
         # Titles
         st.title("Constraints Data Visualizer")
         st.header("Constraint Selector")
@@ -27,12 +27,14 @@ def compile():
         # Choose constraint
         conSelect = st.selectbox(
             "Which Constraint?",
-            cons['Cons_name']
+            cons
         )
         
         # Get the constraint information, and the mins and maxes of it
-        row = cons.loc[cons['Cons_name'] == conSelect]
-        minimaxes = congestion_database_pull.get_minimaxes(row['PriceDate'].iloc[0], (row['Hour'].iloc[0].item()))
+        row = total[total['Cons_name'] == conSelect].max()
+        minimaxes = congestion_database_pull.get_minimaxes(row)
+        minimaxes[0]['Percentage'] = row['Percentage'] * 100
+        minimaxes[1]['Percentage'] = row['Percentage'] * 100
         
         # Write the mins and maxes
         st.write(minimaxes[1])
@@ -138,7 +140,6 @@ def compile():
         # Get the correlation and write it
         pearson = frame[dataSelectX].corr(frame[dataSelectY])
         st.write("Correlation between Data: " + str(pearson))
-        st.write(frame)
 
 
 
