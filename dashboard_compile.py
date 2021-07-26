@@ -31,7 +31,8 @@ def compile():
         )
         
         # Get the constraint information, and the mins and maxes of it
-        row = total[total['Cons_name'] == conSelect].max()
+        row = total[total['Cons_name'] == conSelect]
+        row = row.loc[row['Percentage'].idxmax()]
         minimaxes = congestion_database_pull.get_minimaxes(row)
         minimaxes[0]['Percentage'] = row['Percentage'] * 100
         minimaxes[1]['Percentage'] = row['Percentage'] * 100
