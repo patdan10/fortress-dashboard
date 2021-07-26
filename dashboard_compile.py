@@ -37,6 +37,9 @@ def compile():
         minimaxes[0]['Percentage'] = row['Percentage'] * 100
         minimaxes[1]['Percentage'] = row['Percentage'] * 100
         
+        for m in minimaxes:
+            m['PriceDate'] = m['PriceDate'].map(lambda x: x.strftime("%Y-%m-%d"))
+        
         # Write the mins and maxes
         st.write(minimaxes[1])
         st.write(minimaxes[0])
