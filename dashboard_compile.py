@@ -9,11 +9,11 @@ def compile():
     nodeOptions = ['Load', 'Station Temperature', 'Station Wind', 'Region 1 Wind', 'Region 2 Wind', 'Region 3 Wind', 'Region 4 Wind', 'Region 5 Wind', 'Sum of All Wind', 'DA-RT', 'RT-DA', 'Spread', 'Net Demand']
     nodeExclusive = ['DA-RT', 'RT-DA', 'DALMP']
     components = {'DA-RT': ['DALMP', 'RTLMP'], 'RT-DA': ['RTLMP', 'DALMP'], 'Spread': ['DALMP', 'RTLMP', 'RTLMP', 'DALMP'], 'DALMP': ['DALMP']}
-    colors = [[0,0.247,0.361],[0.737,0.314,0.565],[1,0.388,0.380],[1,0.651,0]]
+    colors = [[0.502,0.502,0.502],[1,1,0],[1,0,0]]
 
     # If password, enter the dataframe
     password = st.text_input("Password: ")
-    if password == "constraint123" or True:
+    if password == "constraint123":
         
         # Get the constraints, nodes, and iems, which are all cached
         cons, total = congestion_database_pull.get_constraints()
@@ -117,12 +117,15 @@ def compile():
 
         #COLOR GRADIANT
         doColor = st.checkbox("Do you want to color the points?")
-        doColor = True
         if doColor:
             # Pick the color for each
             colorData = color_picker(allNodes, nodes, components, colors)
             frame = pd.merge(frame, colorData, how='left', on=['PriceDate', 'Hour'])
             frame.dropna(axis=0, how='any', inplace=True)
+            kernel = st.selectbox(
+                "Which Computation Method?",
+                ['Linear', 'Polynomial', 'Radial', 'Sigmoid', 'Logistic', 'Random Forest', 'Gaussian']
+            )
         else:
             # Uncomment for random gradiant
             """gradiant = []
@@ -130,11 +133,12 @@ def compile():
             for i in range(len(frame[dataSelectX])):
                 gradiant.append(step*i)"""
             
-            # Makee them all the same
+            # Make them all the same
             frame['Color'] = 0
+            kernel = 'Linear'
 
         # Make the scatterplot and plot it
-        plot = dashboard_graph_creator.scatter_matplot_returner(frame[dataSelectX], frame[dataSelectY], nodeSelectX, nodeSelectY, dataSelectX, dataSelectY, frame['Color'], colors, doColor)
+        plot = dashboard_graph_creator.scatter_matplot_returner(frame[dataSelectX], frame[dataSelectY], nodeSelectX, nodeSelectY, dataSelectX, dataSelectY, frame['Color'], colors, doColor, kernel)
         st.pyplot(plot)
         
         # Convert to floats
@@ -219,7 +223,8 @@ def color_picker(allNodes, nodes, components, colors):
                 data["Color"] -= temp["Color"]
     
     # Set color for information
-    data['Color'] = data['Color'].map(lambda x: colors[0] if x < -2 else (colors[1] if x < 1 else (colors[2] if x < 5 else colors[3])))
+    #data['Color'] = data['Color'].map(lambda x: colors[0] if x < 1 else (colors[1] if x < 5 else colors[2]))
+    data['Color'] = data['Color'].map(lambda x: 0 if x < 1 else (1 if x < 5 else 2))
     return data
 
 
