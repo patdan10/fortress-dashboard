@@ -39,7 +39,7 @@ def compile():
         m['PriceDate'] = m['PriceDate'].map(lambda x: x.strftime("%Y-%m-%d"))
     minimaxes[1]['MinimumMCC'] = minimaxes[1]['MinimumMCC'].map(lambda x: float(x))
     minimaxes[0]['MaximumMCC'] = minimaxes[0]['MaximumMCC'].map(lambda x: float(x))
-    
+
     # Write the mins and maxes
     st.write(minimaxes[1])
     st.write(minimaxes[0])
