@@ -86,6 +86,8 @@ def get_min_max_congestion(date, hour, cur):
     mins = pd.DataFrame(data=out)
     mins.columns = minTemps
     mins.sort_values(by=['PriceDate', 'Hour'], inplace=True)
+    print(mins)
+    print(maxes)
     return [maxes, mins]
 
 # Gete nodes and names of the congestions

@@ -16,17 +16,17 @@ classifiers = {'Logistic': LogisticRegression(random_state=1,solver='newton-cg',
                'Random Forest':  RandomForestClassifier(random_state=1, n_estimators=100),
                'Gaussian': GaussianNB()}
 
-def scatter_matplot_returner(dataX, dataY, nodeOptionX, nodeOptionY, dataOptionX, dataOptionY, gradiant, colors, doColor, kernel):
+def scatter_matplot_returner(dataX, dataY, nodeOptionX, nodeOptionY, dataOptionX, dataOptionY, gradiant, colors, doRegions, kernel):
     # Map data to floats
     dataX = dataX.map(lambda x: float(x))
     dataY = dataY.map(lambda x: float(x))
-    gradiant = gradiant.to_numpy().astype(np.integer)
 
     # Generate unmarked chart
     fig, ax = plt.subplots()
     
     # Scatter the data and colors
-    if doColor:
+    if doRegions:
+        gradiant = gradiant.to_numpy().astype(np.integer)
         totalData = []
         dataXList = dataX.to_numpy()
         dataYList = dataY.to_numpy()
@@ -54,6 +54,8 @@ def scatter_matplot_returner(dataX, dataY, nodeOptionX, nodeOptionY, dataOptionX
     ax.set_xlabel(str(nodeOptionX) + " " + str(dataOptionX))
     ax.axhline(y=0, lw=1.5, color='k')
     ax.axvline(x=0, lw=1.5, color='k')
+    ax.set_xlim(left=-10)
+    ax.set_ylim(bottom=-10)
 
     plt.grid()
 

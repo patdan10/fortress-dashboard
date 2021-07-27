@@ -7,152 +7,144 @@ from streamlit import caching
 def compile():
     # The node options, along with helper lists below.
     nodeOptions = ['Load', 'Station Temperature', 'Station Wind', 'Region 1 Wind', 'Region 2 Wind', 'Region 3 Wind', 'Region 4 Wind', 'Region 5 Wind', 'Sum of All Wind', 'DA-RT', 'RT-DA', 'Spread', 'Net Demand']
+    nodeOptionsX = ['Sum of All Wind', 'Load', 'Station Temperature', 'Station Wind', 'Region 1 Wind', 'Region 2 Wind', 'Region 3 Wind', 'Region 4 Wind', 'Region 5 Wind', 'DA-RT', 'RT-DA', 'Spread', 'Net Demand']
+    nodeOptionsY = ['Net Demand', 'Load', 'Station Temperature', 'Station Wind', 'Region 1 Wind', 'Region 2 Wind', 'Region 3 Wind', 'Region 4 Wind', 'Region 5 Wind', 'Sum of All Wind', 'DA-RT', 'RT-DA', 'Spread']
     nodeExclusive = ['DA-RT', 'RT-DA', 'DALMP']
     components = {'DA-RT': ['DALMP', 'RTLMP'], 'RT-DA': ['RTLMP', 'DALMP'], 'Spread': ['DALMP', 'RTLMP', 'RTLMP', 'DALMP'], 'DALMP': ['DALMP']}
     colors = [[0.502,0.502,0.502],[1,1,0],[1,0,0]]
+        
+    # Get the constraints, nodes, and iems, which are all cached
+    cons, total = congestion_database_pull.get_constraints()
+    nodes = nodes_database_pull.get_node_names()
+    iems = weather_temperature_pull.get_iems().sort_values(by='IEMs')
 
-    # If password, enter the dataframe
-    password = st.text_input("Password: ")
-    if password == "constraint123":
-        
-        # Get the constraints, nodes, and iems, which are all cached
-        cons, total = congestion_database_pull.get_constraints()
-        nodes = nodes_database_pull.get_node_names()
-        iems = weather_temperature_pull.get_iems().sort_values(by='IEMs')
+    # Titles
+    st.title("Constraints Data Visualizer")
+    st.header("Constraint Selector")
 
-        # Titles
-        st.title("Constraints Data Visualizer")
-        st.header("Constraint Selector")
+    # Choose constraint
+    conSelect = st.selectbox(
+        "Which Constraint?",
+        cons
+    )
 
-        # Choose constraint
-        conSelect = st.selectbox(
-            "Which Constraint?",
-            cons
-        )
-        
-        # Get the constraint information, and the mins and maxes of it
-        row = total[total['Cons_name'] == conSelect]
-        row = row.loc[row['Percentage'].idxmax()]
-        minimaxes = congestion_database_pull.get_minimaxes(row)
-        minimaxes[0]['Percentage'] = row['Percentage'] * 100
-        minimaxes[1]['Percentage'] = row['Percentage'] * 100
-        
-        for m in minimaxes:
-            m['PriceDate'] = m['PriceDate'].map(lambda x: x.strftime("%Y-%m-%d"))
-        
-        # Write the mins and maxes
-        st.write(minimaxes[1])
-        st.write(minimaxes[0])
-        
-        # Set up the nodes list with the mins and maxes at the top in order
-        pt1 = minimaxes[1]['Node'].values.tolist()
-        pt2 = minimaxes[0]['Node'].values.tolist()
-        allNodes = nodes['NodeName'].copy()
-        allNodes.sort_values(inplace=True)
-        allNodes = list(allNodes)
-        
-        # Remove them
-        for i in range(len(pt1)):
-            allNodes.remove(pt1[i])
-            allNodes.remove(pt2[i])
-        
-        # Add them at the top
-        for i in range(len(pt1))[::-1]:
-            allNodes = [pt1[i]] + allNodes
-            allNodes = [pt2[i]] + allNodes
+    # Get the constraint information, and the mins and maxes of it
+    row = total[total['Cons_name'] == conSelect]
+    row = row.loc[row['Percentage'].idxmax()]
+    minimaxes = congestion_database_pull.get_minimaxes(row)
+    minimaxes[0]['Percentage'] = row['Percentage'] * 100
+    minimaxes[1]['Percentage'] = row['Percentage'] * 100
+
+    for m in minimaxes:
+        m['PriceDate'] = m['PriceDate'].map(lambda x: x.strftime("%Y-%m-%d"))
+    minimaxes[1]['MinimumMCC'] = minimaxes[1]['MinimumMCC'].map(lambda x: float(x))
+    minimaxes[0]['MaximumMCC'] = minimaxes[0]['MaximumMCC'].map(lambda x: float(x))
+    
+    # Write the mins and maxes
+    st.write(minimaxes[1])
+    st.write(minimaxes[0])
+
+    # Set up the nodes list with the mins and maxes at the top in order
+    pt1 = minimaxes[1]['Node'].values.tolist()
+    pt2 = minimaxes[0]['Node'].values.tolist()
+    allNodes = nodes['NodeName'].copy()
+    allNodes.sort_values(inplace=True)
+    allNodes = list(allNodes)
+
+    # Remove them
+    for i in range(len(pt1)):
+        allNodes.remove(pt1[i])
+        allNodes.remove(pt2[i])
+
+    # Add them at the top
+    for i in range(len(pt1))[::-1]:
+        allNodes = [pt1[i]] + allNodes
+        allNodes = [pt2[i]] + allNodes
 
 
-        # Write the X selector
-        st.header("X Data Selector")
-        
-        # Pick the information
-        nodeSelectX, dataX, dataSelectX = info_picker(nodeOptions, iems, nodeExclusive, allNodes, components, nodes, "X")
-        
-        # Filter the data if selected
-        st.subheader("X Data Filter")
-        doFilter = st.checkbox("Do you want to filter X?")
-        
-        # If filtered
-        if doFilter:
-            # Filter the info
-            tempy = filter(dataX, nodeOptions+['DALMP'], "X", iems, nodeExclusive, allNodes, components, nodes)
-            
-            # If it works, do it. If not, write no filter
-            if len(tempy) == 0:
-                st.write("No Filter")
-            else:
-                dataX = tempy
+    # Write the X selector
+    st.header("X Data Selector")
 
+    # Pick the information
+    nodeSelectX, dataX, dataSelectX = info_picker(nodeOptionsX, iems, nodeExclusive, allNodes, components, nodes, "X")
 
-        # Same selection for Y
-        st.header("Y Data Selector")
-        
-        # Pick info for Y
-        nodeSelectY, dataY, dataSelectY = info_picker(nodeOptions, iems, nodeExclusive, allNodes, components, nodes, "Y")
-        
-        # Filter option
-        st.subheader("Y Data Filter")
-        doFilter = st.checkbox("Do you want to filter Y?")
-        
-        # If filtered
-        if doFilter:
-            # Filter the info
-            tempy = filter(dataY, nodeOptions+['DALMP'], "Y", iems, nodeExclusive, allNodes, components, nodes)
-            
-            # If it works, do it. If not, write no filter
-            if len(tempy) == 0:
-                st.write("No Filter")
-            else:
-                dataY = tempy
+    # Filter the data if selected
+    st.subheader("X Data Filter")
+    doFilter = st.checkbox("Do you want to filter X?")
 
+    # If filtered
+    if doFilter:
+        # Filter the info
+        tempy = filter(dataX, nodeOptions+['DALMP'], "X", iems, nodeExclusive, allNodes, components, nodes)
 
-        # Merge the information into one frame
-        frame = pd.merge(dataX, dataY, how='left', on=['PriceDate', 'Hour'])
-        frame.dropna(axis=0, how='any', inplace=True)
-        
-        # If they are the same, add the endings
-        if dataSelectX == dataSelectY:
-            dataSelectX += '_x'
-            dataSelectY += '_y'
-
-        #COLOR GRADIANT
-        doColor = st.checkbox("Do you want to color the points?")
-        if doColor:
-            # Pick the color for each
-            colorData = color_picker(allNodes, nodes, components, colors)
-            frame = pd.merge(frame, colorData, how='left', on=['PriceDate', 'Hour'])
-            frame.dropna(axis=0, how='any', inplace=True)
-            kernel = st.selectbox(
-                "Which Computation Method?",
-                ['Linear', 'Polynomial', 'Radial', 'Sigmoid', 'Logistic', 'Random Forest', 'Gaussian']
-            )
+        # If it works, do it. If not, write no filter
+        if len(tempy) == 0:
+            st.write("No Filter")
         else:
-            # Uncomment for random gradiant
-            """gradiant = []
-            step = 100.0/len(frame[dataSelectX])
-            for i in range(len(frame[dataSelectX])):
-                gradiant.append(step*i)"""
-            
-            # Make them all the same
-            frame['Color'] = 0
-            kernel = 'Linear'
+            dataX = tempy
 
-        # Make the scatterplot and plot it
-        plot = dashboard_graph_creator.scatter_matplot_returner(frame[dataSelectX], frame[dataSelectY], nodeSelectX, nodeSelectY, dataSelectX, dataSelectY, frame['Color'], colors, doColor, kernel)
-        st.pyplot(plot)
-        
-        # Convert to floats
-        frame[dataSelectX] = frame[dataSelectX].map(lambda x: float(x))
-        frame[dataSelectY] = frame[dataSelectY].map(lambda x: float(x))
-        
-        # Get the correlation and write it
-        pearson = frame[dataSelectX].corr(frame[dataSelectY])
-        st.write("Correlation between Data: " + str(pearson))
+
+    # Same selection for Y
+    st.header("Y Data Selector")
+
+    # Pick info for Y
+    nodeSelectY, dataY, dataSelectY = info_picker(nodeOptionsY, iems, nodeExclusive, allNodes, components, nodes, "Y")
+
+    # Filter option
+    st.subheader("Y Data Filter")
+    doFilter = st.checkbox("Do you want to filter Y?")
+
+    # If filtered
+    if doFilter:
+        # Filter the info
+        tempy = filter(dataY, nodeOptions+['DALMP'], "Y", iems, nodeExclusive, allNodes, components, nodes)
+
+        # If it works, do it. If not, write no filter
+        if len(tempy) == 0:
+            st.write("No Filter")
+        else:
+            dataY = tempy
+
+
+    # Merge the information into one frame
+    frame = pd.merge(dataX, dataY, how='left', on=['PriceDate', 'Hour'])
+    frame.dropna(axis=0, how='any', inplace=True)
+
+    # If they are the same, add the endings
+    if dataSelectX == dataSelectY:
+        dataSelectX += '_x'
+        dataSelectY += '_y'
+
+    #COLOR GRADIANT
+    doRegions = st.checkbox("Do you want to create regions?")
+    if doRegions:
+        kernel = st.selectbox(
+            "Which Computation Method?",
+            ['Linear', 'Polynomial', 'Radial', 'Sigmoid', 'Logistic', 'Random Forest', 'Gaussian']
+        )
+    else:
+        kernel = 'Linear'
+
+    colorData = color_picker(allNodes, nodes, components, colors, doRegions)
+    frame = pd.merge(frame, colorData, how='left', on=['PriceDate', 'Hour'])
+    frame.dropna(axis=0, how='any', inplace=True)
+
+    # Make the scatterplot and plot it
+    plot = dashboard_graph_creator.scatter_matplot_returner(frame[dataSelectX], frame[dataSelectY], nodeSelectX, nodeSelectY, dataSelectX, dataSelectY, frame['Color'], colors, doRegions, kernel)
+    st.pyplot(plot)
+
+    # Convert to floats
+    frame[dataSelectX] = frame[dataSelectX].map(lambda x: float(x))
+    frame[dataSelectY] = frame[dataSelectY].map(lambda x: float(x))
+
+    # Get the correlation and write it
+    pearson = frame[dataSelectX].corr(frame[dataSelectY])
+    st.write("Correlation between Data: " + str(pearson))
 
 
 
 # Get the colors for the nodes
-def color_picker(allNodes, nodes, components, colors):
+def color_picker(allNodes, nodes, components, colors, doRegions):
     dataSelect = st.selectbox(
         "Which datapoint to color by?",
         ("DA-RT", "RT-DA", "Spread")
@@ -223,8 +215,10 @@ def color_picker(allNodes, nodes, components, colors):
                 data["Color"] -= temp["Color"]
     
     # Set color for information
-    #data['Color'] = data['Color'].map(lambda x: colors[0] if x < 1 else (colors[1] if x < 5 else colors[2]))
-    data['Color'] = data['Color'].map(lambda x: 0 if x < 1 else (1 if x < 5 else 2))
+    if not doRegions:
+        data['Color'] = data['Color'].map(lambda x: colors[0] if x < 1 else (colors[1] if x < 5 else colors[2]))
+    else:
+        data['Color'] = data['Color'].map(lambda x: 0 if x < 1 else (1 if x < 5 else 2))
     return data
 
 
