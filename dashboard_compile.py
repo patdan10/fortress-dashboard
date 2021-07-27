@@ -115,6 +115,14 @@ def compile():
         dataSelectX += '_x'
         dataSelectY += '_y'
 
+
+    st.subheader("Color Picker")
+    colorData = color_picker(allNodes, nodes, components, colors)
+    frame = pd.merge(frame, colorData, how='left', on=['PriceDate', 'Hour'])
+    frame.dropna(axis=0, how='any', inplace=True)
+
+
+    st.subheader("Region Maker")
     #COLOR GRADIANT
     doRegions = st.checkbox("Do you want to create regions?")
     if doRegions:
@@ -125,9 +133,11 @@ def compile():
     else:
         kernel = 'Linear'
 
-    colorData = color_picker(allNodes, nodes, components, colors, doRegions)
-    frame = pd.merge(frame, colorData, how='left', on=['PriceDate', 'Hour'])
-    frame.dropna(axis=0, how='any', inplace=True)
+    # Set color for information
+    if not doRegions:
+        frame['Color'] = frame['Color'].map(lambda x: colors[0] if x < 1 else (colors[1] if x < 5 else colors[2]))
+    else:
+        frame['Color'] = frame['Color'].map(lambda x: 0 if x < 1 else (1 if x < 5 else 2))
 
     # Make the scatterplot and plot it
     plot = dashboard_graph_creator.scatter_matplot_returner(frame[dataSelectX], frame[dataSelectY], nodeSelectX, nodeSelectY, dataSelectX, dataSelectY, frame['Color'], colors, doRegions, kernel)
@@ -144,7 +154,7 @@ def compile():
 
 
 # Get the colors for the nodes
-def color_picker(allNodes, nodes, components, colors, doRegions):
+def color_picker(allNodes, nodes, components, colors):
     dataSelect = st.selectbox(
         "Which datapoint to color by?",
         ("DA-RT", "RT-DA", "Spread")
@@ -213,12 +223,7 @@ def color_picker(allNodes, nodes, components, colors, doRegions):
                 # If the second one, then subtract it
                 temp = temp.rename(columns={dataSelect: 'Color'})
                 data["Color"] -= temp["Color"]
-    
-    # Set color for information
-    if not doRegions:
-        data['Color'] = data['Color'].map(lambda x: colors[0] if x < 1 else (colors[1] if x < 5 else colors[2]))
-    else:
-        data['Color'] = data['Color'].map(lambda x: 0 if x < 1 else (1 if x < 5 else 2))
+
     return data
 
 
