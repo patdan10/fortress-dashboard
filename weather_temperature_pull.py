@@ -24,7 +24,7 @@ def get_information(nodeSelect):
         # Get a regional wind or temperature
         return get_region(nodeSelect.split(" ")[1])
 
-    # Get the load
+# Get the average load
 def get_load():
     conn = psycopg2.connect(dbname='ISO', user='pdanielson', password='davidson456', host='fortdash.xyz')
     cur = conn.cursor()

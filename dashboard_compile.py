@@ -1,7 +1,6 @@
 import pandas as pd, streamlit as st
-import congestion_database_pull, nodes_database_pull, dashboard_graph_creator, weather_temperature_pull, filter_finder
-from streamlit import caching
-
+import congestion_database_pull, nodes_database_pull, dashboard_graph_creator, weather_temperature_pull, filter_finder, data_formatter
+import streamlit.components.v1 as components
 
 # Dashboard compilation
 def compile():
@@ -32,9 +31,10 @@ def compile():
     row = total[total['Cons_name'] == conSelect]
     row = row.loc[row['Percentage'].idxmax()]
     minimaxes = congestion_database_pull.get_minimaxes(row)
+
+    # Format minimaxes
     minimaxes[0]['Percentage'] = row['Percentage'] * 100
     minimaxes[1]['Percentage'] = row['Percentage'] * 100
-
     for m in minimaxes:
         m['PriceDate'] = m['PriceDate'].map(lambda x: x.strftime("%Y-%m-%d"))
     minimaxes[1]['MinimumMCC'] = minimaxes[1]['MinimumMCC'].map(lambda x: float(x))
@@ -115,15 +115,14 @@ def compile():
         dataSelectX += '_x'
         dataSelectY += '_y'
 
-
+    # Pick the colors based on the DA-RT, RT-DA or the Spread of nodes
     st.subheader("Color Picker")
     colorData = color_picker(allNodes, nodes, components, colors)
     frame = pd.merge(frame, colorData, how='left', on=['PriceDate', 'Hour'])
     frame.dropna(axis=0, how='any', inplace=True)
 
-
+    # Create classification regions if desired
     st.subheader("Region Maker")
-    #COLOR GRADIANT
     doRegions = st.checkbox("Do you want to create regions?")
     if doRegions:
         kernel = st.selectbox(
@@ -135,9 +134,9 @@ def compile():
 
     # Set color for information
     if not doRegions:
-        frame['Color'] = frame['Color'].map(lambda x: colors[0] if x < 1 else (colors[1] if x < 5 else colors[2]))
+        frame['Color'] = frame['PricePoint'].map(lambda x: colors[0] if x < 1 else (colors[1] if x < 5 else colors[2]))
     else:
-        frame['Color'] = frame['Color'].map(lambda x: 0 if x < 1 else (1 if x < 5 else 2))
+        frame['Color'] = frame['PricePoint'].map(lambda x: 0 if x < 1 else (1 if x < 5 else 2))
 
     # Make the scatterplot and plot it
     plot = dashboard_graph_creator.scatter_matplot_returner(frame[dataSelectX], frame[dataSelectY], nodeSelectX, nodeSelectY, dataSelectX, dataSelectY, frame['Color'], colors, doRegions, kernel)
@@ -146,6 +145,13 @@ def compile():
     # Convert to floats
     frame[dataSelectX] = frame[dataSelectX].map(lambda x: float(x))
     frame[dataSelectY] = frame[dataSelectY].map(lambda x: float(x))
+
+
+    # Make Seaborns chart
+    bins, df, colors = data_formatter.make_seaborn_matrix(frame, dataSelectX, dataSelectY)
+    fontsize = st.number_input("Fontsize?")
+    plot = dashboard_graph_creator.bucket_chart_maker(bins, df, nodeSelectX, nodeSelectY, dataSelectX, dataSelectY, colors, fontsize)
+    st.pyplot(plot)
 
     # Get the correlation and write it
     pearson = frame[dataSelectX].corr(frame[dataSelectY])
@@ -175,11 +181,11 @@ def color_picker(allNodes, nodes, components, colors):
             temp = nodes_database_pull.get_node_info(nodes.loc[nodes['NodeName'] == nodeSelectShort].iloc[0]['Node_ID'], bit, dataSelect)
             # If gotten correctly, put it in the dataframe
             if data.empty:
-                temp = temp.rename(columns={dataSelect: 'Color'})
+                temp = temp.rename(columns={dataSelect: 'PricePoint'})
                 data = temp
             else:
-                temp = temp.rename(columns={dataSelect: 'Color'})
-                data["Color"] -= temp["Color"]
+                temp = temp.rename(columns={dataSelect: 'PricePoint'})
+                data["PricePoint"] -= temp["PricePoint"]
         
         
         # Choose short node
@@ -195,13 +201,13 @@ def color_picker(allNodes, nodes, components, colors):
             temp = nodes_database_pull.get_node_info(nodes.loc[nodes['NodeName'] == nodeSelectLong].iloc[0]['Node_ID'], bit, dataSelect)
             # If gotten correctly, put it in dataframe
             if dataTemp.empty:
-                temp = temp.rename(columns={dataSelect: 'Color'})
+                temp = temp.rename(columns={dataSelect: 'PricePoint'})
                 dataTemp = temp
             else:
-                temp = temp.rename(columns={dataSelect: 'Color'})
-                dataTemp["Color"] -= temp["Color"]
+                temp = temp.rename(columns={dataSelect: 'PricePoint'})
+                dataTemp["PricePoint"] -= temp["PricePoint"]
         # Add long and short together for spread
-        data["Color"] += dataTemp["Color"]
+        data["PricePoint"] += dataTemp["PricePoint"]
     else:
         # If DA-RT or RT-DA
         # Select Node
@@ -217,12 +223,12 @@ def color_picker(allNodes, nodes, components, colors):
             temp = nodes_database_pull.get_node_info(nodes.loc[nodes['NodeName'] == nodeSelect].iloc[0]['Node_ID'],bit, dataSelect)
             if data.empty:
                 # If the first one, then set it first
-                temp = temp.rename(columns={dataSelect: 'Color'})
+                temp = temp.rename(columns={dataSelect: 'PricePoint'})
                 data = temp
             else:
                 # If the second one, then subtract it
-                temp = temp.rename(columns={dataSelect: 'Color'})
-                data["Color"] -= temp["Color"]
+                temp = temp.rename(columns={dataSelect: 'PricePoint'})
+                data["PricePoint"] -= temp["PricePoint"]
 
     return data
 

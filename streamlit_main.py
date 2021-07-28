@@ -1,5 +1,6 @@
 import dashboard_compile
 
+# Main dashboard compilation
 def main():
     dashboard_compile.compile()
 

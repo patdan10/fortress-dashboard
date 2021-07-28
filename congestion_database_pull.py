@@ -27,7 +27,7 @@ def get_constraints():
     formatted.columns = cols
     
     # Formatting of data. Drop duplicate days, and isolate days and timees of binding
-    names, formatted = data_formatter.format(formatted)
+    names, formatted = data_formatter.names_and_format(formatted)
     
     # Drop duplicates, and organize, and return
     #names.sort_values(inplace=True, by='Cons_name')
@@ -86,8 +86,6 @@ def get_min_max_congestion(date, hour, cur):
     mins = pd.DataFrame(data=out)
     mins.columns = minTemps
     mins.sort_values(by=['PriceDate', 'Hour'], inplace=True)
-    print(mins)
-    print(maxes)
     return [maxes, mins]
 
 # Gete nodes and names of the congestions
