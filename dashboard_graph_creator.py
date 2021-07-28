@@ -6,8 +6,6 @@ from sklearn.svm import SVC
 from sklearn.linear_model import LogisticRegression
 from sklearn.naive_bayes import GaussianNB
 from sklearn.ensemble import RandomForestClassifier
-import seaborn as sns
-import matplotlib.colors
 # Return the scatterplot with the correct axes and filters
 
 # The region creation ML algorithms
