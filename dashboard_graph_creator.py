@@ -84,6 +84,6 @@ def bucket_chart_maker(bins, df, nodeOptionX, nodeOptionY, dataOptionX, dataOpti
     the_table = ax.table(cellText=df, cellColours=colors, loc='center', rowLabels=bins[1][1:], colLabels=bins[0][1:])
     the_table.auto_set_font_size(False)
     the_table.scale(2.5,1.5)
-    ax.set_title(str(dataOptionX) + " for " + str(nodeOptionX) + " vs " + str(dataOptionY) + " for " + str(nodeOptionY))
+    #ax.set_title(str(dataOptionX) + " for " + str(nodeOptionX) + " vs " + str(dataOptionY) + " for " + str(nodeOptionY))
 
     return fig
