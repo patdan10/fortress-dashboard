@@ -149,7 +149,7 @@ def compile():
 
     # Make Seaborns chart
     bins, df, colors = data_formatter.make_seaborn_matrix(frame, dataSelectX, dataSelectY)
-    fontsize = st.number_input("Fontsize?")
+    #fontsize = st.number_input("Fontsize?")
     plot = dashboard_graph_creator.bucket_chart_maker(bins, df, nodeSelectX, nodeSelectY, dataSelectX, dataSelectY, colors, fontsize)
     st.pyplot(plot)
 
