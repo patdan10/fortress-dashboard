@@ -45,7 +45,7 @@ def make_seaborn_matrix(frame, dp1, dp2):
                 else:
                     colors[-1].append('tomato')
             else:
-                avgs[-1].append(0)
+                avgs[-1].append(" ")
                 colors[-1].append('tomato')
 
     for i in range(len(bins1)):
