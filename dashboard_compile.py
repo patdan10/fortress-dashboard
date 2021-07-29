@@ -115,6 +115,16 @@ def compile():
         dataSelectX += '_x'
         dataSelectY += '_y'
 
+    st.subheader("Date Filter")
+    doDates = st.checkbox("Do you want to filter by Dates?")
+
+    if doDates:
+        start = st.date_input('Start Date')
+        end = st.date_input('End Date')
+        st.write(frame)
+        frame = frame.loc[(frame['PriceDate'] >= start) & (frame['PriceDate'] <= end)]
+        st.write(frame)
+
     # Pick the colors based on the DA-RT, RT-DA or the Spread of nodes
     st.subheader("Color Picker")
     colorData = color_picker(allNodes, nodes, components, colors)

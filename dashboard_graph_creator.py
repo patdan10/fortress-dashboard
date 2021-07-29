@@ -43,10 +43,8 @@ def scatter_matplot_returner(dataX, dataY, nodeOptionX, nodeOptionY, dataOptionX
         else:
             clf = classifiers[algorithm]
 
-        # Fit the data
-        clf.fit(totalData, gradiant)
         # Plotting decision regions
-        number = np.unique(gradiant)
+        number = len(np.unique(gradiant))
         cs = 'black,yellow,red'
         if number == 1:
             # If not regions, scattere with gradiants as normal
@@ -54,6 +52,8 @@ def scatter_matplot_returner(dataX, dataY, nodeOptionX, nodeOptionY, dataOptionX
             plt.legend(handles=make_legend(colors))
             work = False
         else:
+            # Fit the data
+            clf.fit(totalData, gradiant)
             if number == 2:
                 cs = 'black,yellow'
             plot_decision_regions(totalData, gradiant, clf=clf, legend=number, colors=cs, scatter_kwargs={'s':3, 'edgecolor': None})
