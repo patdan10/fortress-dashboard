@@ -121,9 +121,7 @@ def compile():
     if doDates:
         start = st.date_input('Start Date')
         end = st.date_input('End Date')
-        st.write(frame)
         frame = frame.loc[(frame['PriceDate'] >= start) & (frame['PriceDate'] <= end)]
-        st.write(frame)
 
     # Pick the colors based on the DA-RT, RT-DA or the Spread of nodes
     st.subheader("Color Picker")
