@@ -45,7 +45,13 @@ def scatter_matplot_returner(dataX, dataY, nodeOptionX, nodeOptionY, dataOptionX
         # Fit the data
         clf.fit(totalData, gradiant)
         # Plotting decision regions
-        plot_decision_regions(totalData, gradiant, clf=clf, legend=3, colors='black,yellow,red', scatter_kwargs={'s':3, 'edgecolor': None})
+        number = np.unique(gradiant)
+        cs = 'black,yellow,red'
+        if number == 1:
+            cs = 'black'
+        elif number == 2:
+            cs = 'black,yellow'
+        plot_decision_regions(totalData, gradiant, clf=clf, legend=number, colors=cs, scatter_kwargs={'s':3, 'edgecolor': None})
     else:
         # If not regions, scattere with gradiants as normal
         plt.scatter(x=dataX, y=dataY, s=3, c=gradiant)
