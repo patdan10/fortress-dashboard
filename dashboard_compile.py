@@ -139,7 +139,9 @@ def compile():
         frame['Color'] = frame['PricePoint'].map(lambda x: 0 if x < 1 else (1 if x < 5 else 2))
 
     # Make the scatterplot and plot it
-    plot = dashboard_graph_creator.scatter_matplot_returner(frame[dataSelectX], frame[dataSelectY], nodeSelectX, nodeSelectY, dataSelectX, dataSelectY, frame['Color'], colors, doRegions, kernel)
+    plot, work = dashboard_graph_creator.scatter_matplot_returner(frame[dataSelectX], frame[dataSelectY], nodeSelectX, nodeSelectY, dataSelectX, dataSelectY, frame['Color'], colors, doRegions, kernel)
+    if work == False:
+        st.write("Need more than 1 price class to create regions")
     st.pyplot(plot)
 
     # Convert to floats
@@ -148,12 +150,12 @@ def compile():
 
 
     # Make Seaborns chart
-    st.write("MEAN")
+    st.write("MEANS")
     bins, df, colors = data_formatter.make_seaborn_matrix(frame, dataSelectX, dataSelectY, 'mean')
     plot = dashboard_graph_creator.bucket_chart_maker(bins, df, nodeSelectX, nodeSelectY, dataSelectX, dataSelectY, colors)
     st.pyplot(plot)
 
-    st.write("MEDIAN")
+    st.write("MEDIANS")
     bins, df, colors = data_formatter.make_seaborn_matrix(frame, dataSelectX, dataSelectY, 'median')
     plot = dashboard_graph_creator.bucket_chart_maker(bins, df, nodeSelectX, nodeSelectY, dataSelectX, dataSelectY, colors)
     st.pyplot(plot)

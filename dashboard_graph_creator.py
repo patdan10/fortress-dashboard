@@ -22,6 +22,7 @@ def scatter_matplot_returner(dataX, dataY, nodeOptionX, nodeOptionY, dataOptionX
 
     # Generate unmarked chart
     fig, ax = plt.subplots()
+    work = True
     
     # If regions are online, apply them
     if doRegions:
@@ -48,13 +49,16 @@ def scatter_matplot_returner(dataX, dataY, nodeOptionX, nodeOptionY, dataOptionX
         number = np.unique(gradiant)
         cs = 'black,yellow,red'
         if number == 1:
-            cs = 'black'
-        elif number == 2:
-            cs = 'black,yellow'
-        plot_decision_regions(totalData, gradiant, clf=clf, legend=number, colors=cs, scatter_kwargs={'s':3, 'edgecolor': None})
+            # If not regions, scattere with gradiants as normal
+            plt.scatter(x=dataX, y=dataY, s=3, c=gradiant)
+            plt.legend(handles=make_legend(colors))
+            work = False
+        else:
+            if number == 2:
+                cs = 'black,yellow'
+            plot_decision_regions(totalData, gradiant, clf=clf, legend=number, colors=cs, scatter_kwargs={'s':3, 'edgecolor': None})
     else:
         # If not regions, scattere with gradiants as normal
-        print("THERE")
         plt.scatter(x=dataX, y=dataY, s=3, c=gradiant)
         plt.legend(handles=make_legend(colors))
 
@@ -72,7 +76,7 @@ def scatter_matplot_returner(dataX, dataY, nodeOptionX, nodeOptionY, dataOptionX
     ax.set_ylim(bottom=-10)
     plt.grid()
 
-    return fig
+    return fig, work
 
 # If a legend is necessary, create one with the correct colors
 def make_legend(colors):
