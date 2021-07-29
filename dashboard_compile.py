@@ -148,10 +148,12 @@ def compile():
 
 
     # Make Seaborns chart
+    st.write("MEAN")
     bins, df, colors = data_formatter.make_seaborn_matrix(frame, dataSelectX, dataSelectY, 'mean')
     plot = dashboard_graph_creator.bucket_chart_maker(bins, df, nodeSelectX, nodeSelectY, dataSelectX, dataSelectY, colors)
     st.pyplot(plot)
 
+    st.write("MEDIAN")
     bins, df, colors = data_formatter.make_seaborn_matrix(frame, dataSelectX, dataSelectY, 'median')
     plot = dashboard_graph_creator.bucket_chart_maker(bins, df, nodeSelectX, nodeSelectY, dataSelectX, dataSelectY, colors)
     st.pyplot(plot)
