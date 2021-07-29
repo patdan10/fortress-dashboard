@@ -54,6 +54,7 @@ def scatter_matplot_returner(dataX, dataY, nodeOptionX, nodeOptionY, dataOptionX
         plot_decision_regions(totalData, gradiant, clf=clf, legend=number, colors=cs, scatter_kwargs={'s':3, 'edgecolor': None})
     else:
         # If not regions, scattere with gradiants as normal
+        print("THERE")
         plt.scatter(x=dataX, y=dataY, s=3, c=gradiant)
         plt.legend(handles=make_legend(colors))
 
