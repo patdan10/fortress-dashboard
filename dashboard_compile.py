@@ -10,6 +10,13 @@ def compile():
     nodeOptionsY = ['Net Demand', 'Load', 'Station Temperature', 'Station Wind', 'Region 1 Wind', 'Region 2 Wind', 'Region 3 Wind', 'Region 4 Wind', 'Region 5 Wind', 'Sum of All Wind', 'DA-RT', 'RT-DA', 'Spread']
     nodeExclusive = ['DA-RT', 'RT-DA', 'DALMP']
     components = {'DA-RT': ['DALMP', 'RTLMP'], 'RT-DA': ['RTLMP', 'DALMP'], 'Spread': ['DALMP', 'RTLMP', 'RTLMP', 'DALMP'], 'DALMP': ['DALMP']}
+    descriptors = {'Linear': 'Good for analyzing discrete classes, but easily oversimplifies',
+                   'Polynomial': 'Provides generally good results, but very sensitive to outliers',
+                   'Radial': 'Good tolerance for noise and generalization, but classifies only in ellipsoid areas',
+                   'Sigmoid': 'Can handle discrete classes well, but struggles on more complicated problems',
+                   'Logistic': 'Great at classifying less classes, but struggles on more complicated problems',
+                   'Random Forest': 'Great at large datasets, but limited outside of highly populated areas',
+                   'Gaussian': 'Good at handling multiple classes, but is very repulsed by ovelapping, perhaps overcompensating'}
     colors = [[0.502,0.502,0.502],[1,1,0],[1,0,0]]
         
     # Get the constraints, nodes, and iems, which are all cached
@@ -137,6 +144,7 @@ def compile():
             "Which Computation Method?",
             ['Linear', 'Polynomial', 'Radial', 'Sigmoid', 'Logistic', 'Random Forest', 'Gaussian']
         )
+        st.write(descriptors[kernel])
     else:
         kernel = 'Linear'
 
@@ -159,12 +167,12 @@ def compile():
 
     # Make Seaborns chart
     st.write("MEANS")
-    bins, df, colors = data_formatter.make_seaborn_matrix(frame, dataSelectX, dataSelectY, 'mean')
+    bins, df, colors = data_formatter.make_table_matrix(frame, dataSelectX, dataSelectY, 'mean')
     plot = dashboard_graph_creator.bucket_chart_maker(bins, df, nodeSelectX, nodeSelectY, dataSelectX, dataSelectY, colors)
     st.pyplot(plot)
 
     st.write("MEDIANS")
-    bins, df, colors = data_formatter.make_seaborn_matrix(frame, dataSelectX, dataSelectY, 'median')
+    bins, df, colors = data_formatter.make_table_matrix(frame, dataSelectX, dataSelectY, 'median')
     plot = dashboard_graph_creator.bucket_chart_maker(bins, df, nodeSelectX, nodeSelectY, dataSelectX, dataSelectY, colors)
     st.pyplot(plot)
 

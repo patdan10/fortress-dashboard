@@ -28,10 +28,6 @@ def get_constraints():
     
     # Formatting of data. Drop duplicate days, and isolate days and timees of binding
     names, formatted = data_formatter.names_and_format(formatted)
-    
-    # Drop duplicates, and organize, and return
-    #names.sort_values(inplace=True, by='Cons_name')
-    #names.reset_index(inplace=True, drop=True)
     return names, formatted
 
 # Get 5 min and 5 max of a given date and time, which is when it will be binding
