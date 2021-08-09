@@ -275,7 +275,6 @@ def compile():
     bins, df, colors = data_formatter.make_table_matrix(frame, dataSelectX, dataSelectY, 'median')
     plot = dashboard_graph_creator.bucket_chart_maker(bins, df, nodeSelectX, nodeSelectY, dataSelectX, dataSelectY, colors)
     st.pyplot(plot)
-    st.write("COMPLETE")
 
 
 
