@@ -1,6 +1,7 @@
 import psycopg2
 import pandas as pd
 import streamlit as st
+import datetime
 
 # Get the specified information, depending on what is selected.
 def get_information(nodeSelect):
@@ -67,7 +68,7 @@ def get_region(region):
     return df
 
 # Get the wind at an IEM
-def get_wind(iem):
+def get_wind(iem, date):
     # Set up connection
     conn = psycopg2.connect(dbname='ISO', user='pdanielson', password='davidson456', host='fortdash.xyz')
     cur = conn.cursor()
@@ -78,7 +79,7 @@ def get_wind(iem):
     comm = """SELECT iso_utc.pricedate_spp, iso_utc.hour_spp, actual.wind_speed
                 FROM weather.actual
                 JOIN weather.iso_utc ON iso_utc.dt = actual.dt
-                WHERE iso_utc.pricedate_spp >= '2020-01-01' AND iem_id='""" + iem + """'
+                WHERE iso_utc.pricedate_spp >= '""" + date.strftime('%Y-%m-%d') + """' AND iem_id='""" + iem + """'
                 GROUP BY iso_utc.pricedate_spp, iso_utc.hour_spp, actual.iem_id, actual.wind_speed"""
     
     # Get and return
@@ -112,7 +113,7 @@ def get_wind_sum():
     conn.close()
     return df
 
-def get_temperature(iem):
+def get_temperature(iem, date):
     # Set up connection
     conn = psycopg2.connect(dbname='ISO', user='pdanielson', password='davidson456', host='fortdash.xyz')
     cur = conn.cursor()
@@ -123,7 +124,7 @@ def get_temperature(iem):
     comm = """SELECT iso_utc.pricedate_spp, iso_utc.hour_spp, actual.temp
                 FROM weather.actual
                 JOIN weather.iso_utc ON iso_utc.dt = actual.dt
-                WHERE iso_utc.pricedate_spp >= '2020-01-01' AND iem_id='""" + iem + """'
+                WHERE iso_utc.pricedate_spp >= '""" + date.strftime('%Y-%m-%d') + """' AND iem_id='""" + iem + """'
                 GROUP BY iso_utc.pricedate_spp, iso_utc.hour_spp, actual.iem_id, actual.temp"""
     
     # Get and return
@@ -152,4 +153,27 @@ def get_iems():
     df = pd.DataFrame(data=out)
     df.columns = cols
     conn.close()
+    return df
+
+
+def get_forecast(today):
+    conn = psycopg2.connect(dbname='ISO', user='pdanielson', password='davidson456', host='fortdash.xyz')
+    cur = conn.cursor()
+    cur.execute("SET search_path TO spp;")
+    cols = ['DateTime', 'IEM', 'Station Temperature', 'Station Wind']
+    comm = """SELECT f.dt, ms.iem_id, f.temp, f.wind_speed
+    FROM weather.forecast f
+    LEFT JOIN weather.meta_selected ms ON ms.owm_id = f.owm_id
+    WHERE f.dt > '""" + today.strftime("%Y-%m-%d") + """' AND iem_id != ''
+    ORDER BY f.dt DESC"""
+
+    # Get and return
+    cur.execute(comm)
+    out = cur.fetchall()
+    df = pd.DataFrame(data=out)
+    df.columns = cols
+    conn.close()
+    df['PriceDate'] = df['DateTime'].map(lambda x: x.date())
+    df['Hour'] = df['DateTime'].map(lambda x: x.hour)
+
     return df

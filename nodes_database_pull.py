@@ -25,7 +25,7 @@ def get_node_names():
     return df
 
 # Get piece of information for a node
-def get_node_info(node, datapoint, name):
+def get_node_info(node, datapoint, name, ending):
     cols = ['PriceDate', 'Hour', name]
     # Set up connection
     conn = psycopg2.connect(dbname='ISO', user='pdanielson', password='davidson456', host='fortdash.xyz')
@@ -35,9 +35,11 @@ def get_node_info(node, datapoint, name):
     # Get the piece of information for a specific node
     comm = """SELECT p.pricedate, p.hour, p.""" + datapoint + """
                 FROM prices p
-                WHERE p.node_id=""" + str(node)
+                WHERE p.node_id=""" + str(node) + ending
     cur.execute(comm)
     out = cur.fetchall()
+    if len(out) <= 1:
+        return False
     df = pd.DataFrame(data=out)
     df.columns = cols
     conn.close()

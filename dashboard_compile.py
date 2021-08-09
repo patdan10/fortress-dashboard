@@ -1,9 +1,13 @@
 import pandas as pd, streamlit as st
-import congestion_database_pull, nodes_database_pull, dashboard_graph_creator, weather_temperature_pull, filter_finder, data_formatter
-import streamlit.components.v1 as components
+import congestion_database_pull, nodes_database_pull, dashboard_graph_creator, weather_temperature_pull, filter_finder, data_formatter, cons_to_states, node_prioritizer
+import datetime
+
+
+
 
 # Dashboard compilation
 def compile():
+    time_until_end_of_day()
     # The node options, along with helper lists below.
     nodeOptions = ['Load', 'Station Temperature', 'Station Wind', 'Region 1 Wind', 'Region 2 Wind', 'Region 3 Wind', 'Region 4 Wind', 'Region 5 Wind', 'Sum of All Wind', 'DA-RT', 'RT-DA', 'Spread', 'Net Demand']
     nodeOptionsX = ['Sum of All Wind', 'Load', 'Station Temperature', 'Station Wind', 'Region 1 Wind', 'Region 2 Wind', 'Region 3 Wind', 'Region 4 Wind', 'Region 5 Wind', 'DA-RT', 'RT-DA', 'Spread', 'Net Demand']
@@ -18,15 +22,86 @@ def compile():
                    'Random Forest': 'Great at large datasets, but limited outside of highly populated areas',
                    'Gaussian': 'Good at handling multiple classes, but is very repulsed by ovelapping, perhaps overcompensating'}
     colors = [[0.502,0.502,0.502],[1,1,0],[1,0,0]]
-        
+    locations = {'OKC': ['OKC', 'GOK', 'OJA', 'RCE', '1F0'],
+    'KAN': ['MKC', 'OWI', 'STJ', 'SLN', 'MYZ'],
+    'DAK': ['BKX', 'ABR', 'GFK', 'DIK', 'MOT'],
+    'NEB': ['BBW'],
+    'TEX': ['HRX', 'AMA']}
+    states = cons_to_states.cons
+    bar = st.progress(0)
+    pd.set_option('display.max_columns', None)
+
+    all_iems = ['OKC', 'GOK', 'OJA', 'RCE', '1F0', 'MKC', 'OWI', 'STJ', 'SLN', 'MYZ', 'BKX', 'ABR', 'GFK', 'DIK', 'MOT', 'BBW', 'HRX', 'AMA']
+
+
     # Get the constraints, nodes, and iems, which are all cached
     cons, total = congestion_database_pull.get_constraints()
     nodes = nodes_database_pull.get_node_names()
     iems = weather_temperature_pull.get_iems().sort_values(by='IEMs')
+    weekAgo = datetime.datetime.today() - datetime.timedelta(weeks=1)
 
     # Titles
     st.title("Constraints Data Visualizer")
     st.header("Constraint Selector")
+
+
+    doPrioritize = st.checkbox("Do you want to rank constraints?")
+    if doPrioritize:
+        fc = weather_temperature_pull.get_forecast(datetime.datetime.today())
+        uniquedatetimes = pd.DataFrame(fc['PriceDate'].drop_duplicates())
+        uniquedatetimes['DateID'] = range(len(uniquedatetimes.index))
+        fc = pd.merge(fc, uniquedatetimes, on=['PriceDate'])
+
+        # Next
+        nodesPos = all_nodes_getter(cons, total, weekAgo)
+        priorities = get_locations(locations, weekAgo).dropna()
+
+        bigData = pd.merge(nodesPos, priorities, on=['PriceDate', 'Hour'])
+
+        # Merge
+        uniquedatetimes = pd.DataFrame(priorities['PriceDate'].drop_duplicates())
+        uniquedatetimes['DateID'] = range(len(uniquedatetimes.index))
+        priorities = pd.merge(priorities, uniquedatetimes, on=['PriceDate'])
+
+        scores = []
+        # Get IEM likelyhood
+        for i in all_iems:
+            mergedDays = pd.merge(fc, priorities[priorities['IEM']==i], on=['DateID', 'Hour', 'IEM'])
+            score = mergedDays['Station Wind_y'].sum() - mergedDays['Station Wind_x'].sum() + mergedDays['Station Temperature_y'].sum() - mergedDays['Station Temperature_x'].sum()
+            scores.append((mergedDays.iloc[0]['IEM'], score))
+        scores.sort(key=lambda tup: tup[1])
+
+        nodeswithiems = []
+        counter = 0
+        unicon = bigData['Constraint'].unique()
+        for c in unicon:
+            counter += 1
+            percent = (float(counter) / float(len(unicon)))
+            bar.progress(percent)
+
+            if c not in states.keys():
+                continue
+
+            nodeData = bigData[(bigData['Constraint'] == c) & (bigData['Region'] == states[c])]
+            absol = node_prioritizer.line_fit(nodeData)
+            temp = [c, states[c], absol[0], absol[1]]
+            nodeswithiems.append(temp)
+
+        nodeswithiems = pd.DataFrame(nodeswithiems, columns=['Constraint', 'State', 'IEM', 'Score'])
+
+        cons = []
+
+        for tup in scores:
+            tempCons = nodeswithiems[nodeswithiems['IEM'] == tup[0]]
+            tempCons.sort_values(by='Score')
+            for c in tempCons['Constraint'].to_numpy():
+                cons.append(c)
+
+    # End of Tab
+
+
+
+
 
     # Choose constraint
     conSelect = st.selectbox(
@@ -37,7 +112,7 @@ def compile():
     # Get the constraint information, and the mins and maxes of it
     row = total[total['Cons_name'] == conSelect]
     row = row.loc[row['Percentage'].idxmax()]
-    minimaxes = congestion_database_pull.get_minimaxes(row)
+    minimaxes = congestion_database_pull.get_minimaxes(row, 5, False)
 
     # Format minimaxes
     minimaxes[0]['Percentage'] = row['Percentage'] * 100
@@ -69,6 +144,17 @@ def compile():
         allNodes = [pt2[i]] + allNodes
 
 
+
+
+
+
+
+
+
+
+
+
+    st.markdown("---")
     # Write the X selector
     st.header("X Data Selector")
 
@@ -76,6 +162,7 @@ def compile():
     nodeSelectX, dataX, dataSelectX = info_picker(nodeOptionsX, iems, nodeExclusive, allNodes, components, nodes, "X")
 
     # Filter the data if selected
+    st.markdown("---")
     st.subheader("X Data Filter")
     doFilter = st.checkbox("Do you want to filter X?")
 
@@ -92,6 +179,7 @@ def compile():
 
 
     # Same selection for Y
+    st.markdown("---")
     st.header("Y Data Selector")
 
     # Pick info for Y
@@ -122,6 +210,7 @@ def compile():
         dataSelectX += '_x'
         dataSelectY += '_y'
 
+    st.markdown("---")
     st.subheader("Date Filter")
     doDates = st.checkbox("Do you want to filter by Dates?")
 
@@ -131,12 +220,14 @@ def compile():
         frame = frame.loc[(frame['PriceDate'] >= start) & (frame['PriceDate'] <= end)]
 
     # Pick the colors based on the DA-RT, RT-DA or the Spread of nodes
+    st.markdown("---")
     st.subheader("Color Picker")
     colorData = color_picker(allNodes, nodes, components, colors)
     frame = pd.merge(frame, colorData, how='left', on=['PriceDate', 'Hour'])
     frame.dropna(axis=0, how='any', inplace=True)
 
     # Create classification regions if desired
+    st.markdown("---")
     st.subheader("Region Maker")
     doRegions = st.checkbox("Do you want to create regions?")
     if doRegions:
@@ -158,27 +249,33 @@ def compile():
     plot, work = dashboard_graph_creator.scatter_matplot_returner(frame[dataSelectX], frame[dataSelectY], nodeSelectX, nodeSelectY, dataSelectX, dataSelectY, frame['Color'], colors, doRegions, kernel)
     if work == False:
         st.write("Need more than 1 price class to create regions")
+    st.markdown("---")
     st.pyplot(plot)
+    st.markdown("---")
 
     # Convert to floats
     frame[dataSelectX] = frame[dataSelectX].map(lambda x: float(x))
     frame[dataSelectY] = frame[dataSelectY].map(lambda x: float(x))
 
 
+    # Get the correlation and write it
+    pearson = frame[dataSelectX].corr(frame[dataSelectY])
+    st.write("Correlation between Data: " + str(pearson))
+
+
     # Make Seaborns chart
-    st.write("MEANS")
+    st.markdown("---")
+    st.subheader("MEAN")
     bins, df, colors = data_formatter.make_table_matrix(frame, dataSelectX, dataSelectY, 'mean')
     plot = dashboard_graph_creator.bucket_chart_maker(bins, df, nodeSelectX, nodeSelectY, dataSelectX, dataSelectY, colors)
     st.pyplot(plot)
 
-    st.write("MEDIANS")
+    st.markdown("---")
+    st.subheader("MEDIAN")
     bins, df, colors = data_formatter.make_table_matrix(frame, dataSelectX, dataSelectY, 'median')
     plot = dashboard_graph_creator.bucket_chart_maker(bins, df, nodeSelectX, nodeSelectY, dataSelectX, dataSelectY, colors)
     st.pyplot(plot)
-
-    # Get the correlation and write it
-    pearson = frame[dataSelectX].corr(frame[dataSelectY])
-    st.write("Correlation between Data: " + str(pearson))
+    st.write("COMPLETE")
 
 
 
@@ -188,7 +285,7 @@ def color_picker(allNodes, nodes, components, colors):
         "Which datapoint to color by?",
         ("DA-RT", "RT-DA", "Spread")
     )
-    
+
     # Depending on the selected point, get different information. If spread, do this
     if dataSelect == 'Spread':
         # Choose long node
@@ -197,11 +294,11 @@ def color_picker(allNodes, nodes, components, colors):
             allNodes
         )
         data = pd.DataFrame()
-        
+
         # Get DA-RT for Long
         for bit in components['DA-RT']:
             # Get data for Long node
-            temp = nodes_database_pull.get_node_info(nodes.loc[nodes['NodeName'] == nodeSelectShort].iloc[0]['Node_ID'], bit, dataSelect)
+            temp = nodes_database_pull.get_node_info(nodes.loc[nodes['NodeName'] == nodeSelectShort].iloc[0]['Node_ID'], bit, dataSelect, "")
             # If gotten correctly, put it in the dataframe
             if data.empty:
                 temp = temp.rename(columns={dataSelect: 'PricePoint'})
@@ -209,19 +306,19 @@ def color_picker(allNodes, nodes, components, colors):
             else:
                 temp = temp.rename(columns={dataSelect: 'PricePoint'})
                 data["PricePoint"] -= temp["PricePoint"]
-        
-        
+
+
         # Choose short node
         nodeSelectLong = st.selectbox(
             "Which Node Short?",
             allNodes
         )
         dataTemp = pd.DataFrame()
-        
+
         # Get RT-DA for Short
         for bit in components['RT-DA']:
             # Get data for Short node
-            temp = nodes_database_pull.get_node_info(nodes.loc[nodes['NodeName'] == nodeSelectLong].iloc[0]['Node_ID'], bit, dataSelect)
+            temp = nodes_database_pull.get_node_info(nodes.loc[nodes['NodeName'] == nodeSelectLong].iloc[0]['Node_ID'], bit, dataSelect, "")
             # If gotten correctly, put it in dataframe
             if dataTemp.empty:
                 temp = temp.rename(columns={dataSelect: 'PricePoint'})
@@ -239,11 +336,11 @@ def color_picker(allNodes, nodes, components, colors):
             allNodes
         )
         data = pd.DataFrame()
-        
+
         # For componant in data selected
         for bit in components[dataSelect]:
             # Get the bit of information
-            temp = nodes_database_pull.get_node_info(nodes.loc[nodes['NodeName'] == nodeSelect].iloc[0]['Node_ID'],bit, dataSelect)
+            temp = nodes_database_pull.get_node_info(nodes.loc[nodes['NodeName'] == nodeSelect].iloc[0]['Node_ID'],bit, dataSelect, "")
             if data.empty:
                 # If the first one, then set it first
                 temp = temp.rename(columns={dataSelect: 'PricePoint'})
@@ -265,7 +362,7 @@ def info_picker(nodeOptions, iems, nodeExclusive, allNodes, components, nodes, p
         "Which Info On " + point + "?",
         nodeOptions
     )
-    
+
     # If teemperature
     if dataSelect == 'Station Temperature':
         nodeSelect = st.selectbox(
@@ -273,7 +370,7 @@ def info_picker(nodeOptions, iems, nodeExclusive, allNodes, components, nodes, p
             iems
         )
         # Select temperature at chosen point
-        data = weather_temperature_pull.get_temperature(nodeSelect)
+        data = weather_temperature_pull.get_temperature(nodeSelect, datetime.datetime.strptime("2020-01-01", '%Y-%m-%d'))
     elif dataSelect == 'Station Wind':
         # If wind temperatuer
         nodeSelect = st.selectbox(
@@ -281,7 +378,7 @@ def info_picker(nodeOptions, iems, nodeExclusive, allNodes, components, nodes, p
             iems
         )
         # Select wind at certain point
-        data = weather_temperature_pull.get_wind(nodeSelect)
+        data = weather_temperature_pull.get_wind(nodeSelect, datetime.datetime.strptime("2020-01-01", '%Y-%m-%d'))
     elif dataSelect in nodeExclusive:
         # If it needs a node
         nodeSelect = st.selectbox(
@@ -292,8 +389,7 @@ def info_picker(nodeOptions, iems, nodeExclusive, allNodes, components, nodes, p
         # Get the relevant bit information at each node
         for bit in components[dataSelect]:
             # Get the information
-            temp = nodes_database_pull.get_node_info(nodes.loc[nodes['NodeName'] == nodeSelect].iloc[0]['Node_ID'],
-                                                     bit, dataSelect)
+            temp = nodes_database_pull.get_node_info(nodes.loc[nodes['NodeName'] == nodeSelect].iloc[0]['Node_ID'], bit, dataSelect, "")
             # Select information and subtract it
             if data.empty:
                 data = temp
@@ -306,36 +402,34 @@ def info_picker(nodeOptions, iems, nodeExclusive, allNodes, components, nodes, p
             allNodes
         )
         data = pd.DataFrame()
-        
+
         # Get the DA-RT information
         for bit in components['DA-RT']:
             # Get bit of information, and select it
-            temp = nodes_database_pull.get_node_info(
-                nodes.loc[nodes['NodeName'] == nodeSelectShort].iloc[0]['Node_ID'], bit, dataSelect)
+            temp = nodes_database_pull.get_node_info(nodes.loc[nodes['NodeName'] == nodeSelectShort].iloc[0]['Node_ID'], bit, dataSelect, "")
             if data.empty:
                 data = temp
             else:
                 data[dataSelect] -= temp[dataSelect]
-        
+
         # Select short node
         nodeSelectLong = st.selectbox(
             "Which Node Short On " + point + "?",
             allNodes
         )
         dataTemp = pd.DataFrame()
-        
+
         # Get the RT-DA information
         for bit in components['RT-DA']:
             # Get bit of information
-            temp = nodes_database_pull.get_node_info(
-                nodes.loc[nodes['NodeName'] == nodeSelectLong].iloc[0]['Node_ID'], bit, dataSelect)
-            
+            temp = nodes_database_pull.get_node_info(nodes.loc[nodes['NodeName'] == nodeSelectLong].iloc[0]['Node_ID'], bit, dataSelect, "")
+
             # Select information and subtract
             if dataTemp.empty:
                 dataTemp = temp
             else:
                 dataTemp[dataSelect] -= temp[dataSelect]
-        
+
         # Add them together
         data[dataSelect] += dataTemp[dataSelect]
         nodeSelect = nodeSelectShort + " and " + nodeSelectLong
@@ -356,7 +450,7 @@ def filter(data, nodeOptions, point, iems, nodeExclusive, allNodes, components, 
     # Get info to filter
     node, toShow, dataName = info_picker(nodeOptions[:-4]+[nodeOptions[-1]], iems, nodeExclusive, allNodes, components, nodes, "Filter " + point)
     st.write(toShow[dataName].dropna(axis=0, how='any').sort_values().reset_index(drop=True))
-    
+
     # Select direction to filter
     direction = st.selectbox(
         "Which direction to filter on " + point + "?",
@@ -365,17 +459,71 @@ def filter(data, nodeOptions, point, iems, nodeExclusive, allNodes, components, 
 
     # Select the limit
     limit = st.number_input("What is the limit on " + point + "?")
-    
+
     # Make filter and get dates
     filterDates = filter_finder.filter_helper(dataName, direction, limit, node)
-    
+
     # If you get dates, merge them
     if len(filterDates) != 0:
         data = pd.merge(filterDates, data, left_on=['PriceDate', 'Hour'], right_on=['PriceDate', 'Hour'])
     else:
         st.write("Failure")
-        
+
     # Sort and drop values
     data.sort_values(by=['PriceDate', 'Hour'], inplace=True)
     data.dropna(axis=0, how='any', inplace=True)
     return data
+
+
+
+@st.cache(suppress_st_warning=True)
+def get_locations(locations, weekAgo):
+    priorities = pd.DataFrame()
+    for loc in locations.keys():
+        for n in locations[loc]:
+            if priorities.empty:
+                priorities = pd.merge(weather_temperature_pull.get_wind(n, weekAgo), weather_temperature_pull.get_temperature(n, weekAgo), how='left', on=['PriceDate', 'Hour'])
+                priorities['Region'] = loc
+                priorities['IEM'] = n
+            else:
+                merged = pd.merge(weather_temperature_pull.get_wind(n, weekAgo), weather_temperature_pull.get_temperature(n, weekAgo), how='left', on=['PriceDate', 'Hour'])
+                merged['Region'] = loc
+                merged['IEM'] = n
+                priorities = pd.concat([priorities, merged], ignore_index=True)
+
+    return priorities.reset_index(drop=True)
+
+
+
+def time_until_end_of_day():
+    dt = datetime.datetime.now()
+    tomorrow = dt + datetime.timedelta(days=1)
+    temp = datetime.datetime.combine(tomorrow, datetime.time.min) - dt
+    return temp.total_seconds()
+
+@st.cache(ttl=6000)
+def all_nodes_getter(cons, total, weekAgo):
+    nodesAffectedPos = pd.DataFrame()
+    counter = 0
+
+    for c in cons:
+        r = total[total['Cons_name'] == c]
+        r = r.loc[r['Percentage'].idxmax()]
+        minimaxesTemp = congestion_database_pull.get_minimaxes(r, 1, True)[0]
+        node = minimaxesTemp.iloc[0]['Node']
+        minimaxesTemp = nodes_database_pull.get_node_info(minimaxesTemp.iloc[0]['ID'], 'rtlmp', 'RTLMP', " AND p.pricedate>='"+weekAgo.strftime("%Y-%m-%d")+"'")
+
+        if type(minimaxesTemp) == type(False):
+            continue
+
+        minimaxesTemp['Node'] = node
+        minimaxesTemp['Constraint'] = c
+        if nodesAffectedPos.empty:
+            nodesAffectedPos = minimaxesTemp
+        else:
+            nodesAffectedPos = pd.concat([nodesAffectedPos, minimaxesTemp], ignore_index=True)
+
+    nodesAffectedPos.dropna(inplace=True)
+    nodesAffectedPos['RTLMP'] = nodesAffectedPos['RTLMP'].map(lambda x: float(x))
+
+    return nodesAffectedPos

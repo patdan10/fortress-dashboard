@@ -31,22 +31,21 @@ def get_constraints():
     return names, formatted
 
 # Get 5 min and 5 max of a given date and time, which is when it will be binding
-def get_minimaxes(row):
+def get_minimaxes(row, limit, onlyMax):
     conn = psycopg2.connect(dbname='ISO', user='pdanielson', password='davidson456', host='fortdash.xyz')
     cur = conn.cursor()
     cur.execute("SET search_path TO spp;")
     
     # Get congestions
-    nodes = get_min_max_congestion(row['PriceDate'], row['Hour'], cur)
-    
+    nodes = get_min_max_congestion(row['PriceDate'], row['Hour'], cur, limit, onlyMax)
+
     # Match to node names
     for i in range(len(nodes)):
         nodes[i] = get_min_max_nodes(nodes[i], cur)
-
     return nodes
 
 # Get top 5 and bottom 5 congestions
-def get_min_max_congestion(date, hour, cur):
+def get_min_max_congestion(date, hour, cur, limit, onlyMax):
     # Get maximums
     maxTemps = ['PriceDate', 'Hour', 'MaximumMCC']
     
@@ -54,9 +53,10 @@ def get_min_max_congestion(date, hour, cur):
     comm = """SELECT p.pricedate, p.hour, p.rtmcc
                         FROM prices p
                         WHERE (p.pricedate='""" + date.strftime("%Y-%m-%d") + """' AND p.hour=""" + str(hour) + """)
+                        AND p.rtmcc IS NOT NULL
                         GROUP BY p.pricedate, p.hour, p.rtmcc
                         ORDER BY p.rtmcc DESC
-                        LIMIT 5"""
+                        LIMIT """ + str(limit)
     
     # Select and format
     cur.execute(comm)
@@ -64,25 +64,28 @@ def get_min_max_congestion(date, hour, cur):
     maxes = pd.DataFrame(data=out)
     maxes.columns = maxTemps
     maxes.sort_values(by=['PriceDate', 'Hour'], inplace=True)
-    
-    # Get minimums
-    minTemps = ['PriceDate', 'Hour', 'MinimumMCC']
-    
-    # Select minimums on date and time of binding
-    comm = """SELECT p.pricedate, p.hour, p.rtmcc
-                        FROM prices p
-                        WHERE (p.pricedate='""" + date.strftime("%Y-%m-%d") + """' AND p.hour=""" + str(hour) + """)
-                        GROUP BY p.pricedate, p.hour, p.rtmcc
-                        ORDER BY p.rtmcc ASC
-                        LIMIT 5"""
-    
-    # Select and format
-    cur.execute(comm)
-    out = cur.fetchall()
-    mins = pd.DataFrame(data=out)
-    mins.columns = minTemps
-    mins.sort_values(by=['PriceDate', 'Hour'], inplace=True)
-    return [maxes, mins]
+
+    if not onlyMax:
+        # Get minimums
+        minTemps = ['PriceDate', 'Hour', 'MinimumMCC']
+
+        # Select minimums on date and time of binding
+        comm = """SELECT p.pricedate, p.hour, p.rtmcc
+                            FROM prices p
+                            WHERE (p.pricedate='""" + date.strftime("%Y-%m-%d") + """' AND p.hour=""" + str(hour) + """)
+                            GROUP BY p.pricedate, p.hour, p.rtmcc
+                            ORDER BY p.rtmcc ASC
+                            LIMIT """ + str(limit)
+
+        # Select and format
+        cur.execute(comm)
+        out = cur.fetchall()
+        mins = pd.DataFrame(data=out)
+        mins.columns = minTemps
+        mins.sort_values(by=['PriceDate', 'Hour'], inplace=True)
+        return [maxes, mins]
+    else:
+        return [maxes]
 
 # Gete nodes and names of the congestions
 def get_min_max_nodes(formatted, cur):
@@ -92,18 +95,17 @@ def get_min_max_nodes(formatted, cur):
     
     # For the minimums or maximums, get the nodename of the day, time, and congestion of each
     for index, row in formatted.iterrows():
-        comm = """SELECT n.nodename
+        comm = """SELECT n.nodename, n.node_id
                     FROM nodes n
                     WHERE n.node_id = (SELECT p.node_id FROM prices p 
-                    WHERE (p.pricedate='""" + str(row['PriceDate']).split(' ')[0] + """' AND p.hour=""" + str(row['Hour']) + """ AND p.rtmcc=""" + str(row[mc])+ """)
-                    LIMIT 1)"""
+                    WHERE (p.pricedate='""" + str(row['PriceDate']).split(' ')[0] + """' AND p.hour=""" + str(row['Hour']) + """ AND p.rtmcc=""" + str(row[mc]) + """)LIMIT 1)"""
         
         # Get and format
         cur.execute(comm)
         
         # This is the formatting
-        extreme = cur.fetchall()[0][0]
-        temp = pd.DataFrame(data={'PriceDate': row['PriceDate'], 'Hour': row['Hour'], mc: row[mc], 'Node': extreme}, index=[index])
+        extreme = cur.fetchall()
+        temp = pd.DataFrame(data={'PriceDate': row['PriceDate'], 'Hour': row['Hour'], mc: row[mc], 'Node': extreme[0][0], 'ID': extreme[0][1]}, index=[index])
         
         # If its the first, make it the first. Otherwise, append it to the end
         if index == 0:
