@@ -4,20 +4,21 @@ from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestRegressor
 from sklearn import metrics
 
-def line_fit(df):
+def line_fit(df, fcs):
     result = ("NAN", float("inf"))
     for iem in df['IEM'].unique():
         dfTemp = df[df['IEM'] == iem]
         inputs = np.asarray(dfTemp[['Station Wind', 'Station Temperature']])
         outputs = np.asarray(dfTemp['RTLMP'])
-        absolute = random_forest(inputs, outputs)
+        absolute, regress = random_forest(inputs, outputs, fcs)
         if absolute < result[1]:
             result = (iem, absolute)
+
 
     return result
 
 # The Random Forest regreessor
-def random_forest(inputs, outputs):
+def random_forest(inputs, outputs, fcs):
     # Split data
     X_train, X_test, y_train, y_test = train_test_split(inputs, outputs, test_size=0.33, shuffle=True)
 
@@ -35,8 +36,4 @@ def random_forest(inputs, outputs):
     root = np.sqrt(squared)
 
     # Return
-    return absolute
-
-def spread_finder(df):
-    return "NONE"
-    # TO IMPLEMENT
+    return absolute, regressor

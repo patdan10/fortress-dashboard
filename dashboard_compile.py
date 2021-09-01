@@ -46,56 +46,69 @@ def compile():
 
 
     doPrioritize = st.checkbox("Do you want to rank constraints?")
-    if doPrioritize:
-        fc = weather_temperature_pull.get_forecast(datetime.datetime.today())
+    if doPrioritize or True:
+
+        # Get weather forecasts
+        fc = weather_temperature_pull.get_forecast(datetime.datetime.today()+datetime.timedelta(days=1))
         uniquedatetimes = pd.DataFrame(fc['PriceDate'].drop_duplicates())
         uniquedatetimes['DateID'] = range(len(uniquedatetimes.index))
         fc = pd.merge(fc, uniquedatetimes, on=['PriceDate'])
 
-        # Next
+        # Get nodes information and weather station information, in order to match
         nodesPos = all_nodes_getter(cons, total, weekAgo)
         priorities = get_locations(locations, weekAgo).dropna()
 
+        # Merge weather station and node information so we can match them
         bigData = pd.merge(nodesPos, priorities, on=['PriceDate', 'Hour'])
 
-        # Merge
+        # Merge dates with location information to create granularity
         uniquedatetimes = pd.DataFrame(priorities['PriceDate'].drop_duplicates())
         uniquedatetimes['DateID'] = range(len(uniquedatetimes.index))
-        priorities = pd.merge(priorities, uniquedatetimes, on=['PriceDate'])
 
-        scores = []
+
+
+
+
+        # potentially valueless. Figure it out.
+        #priorities = pd.merge(priorities, uniquedatetimes, on=['PriceDate'])
+        """scoresByHour = [[],[],[],[],[],[],[],[]]
         # Get IEM likelyhood
         for i in all_iems:
             mergedDays = pd.merge(fc, priorities[priorities['IEM']==i], on=['DateID', 'Hour', 'IEM'])
-            score = mergedDays['Station Wind_y'].sum() - mergedDays['Station Wind_x'].sum() + mergedDays['Station Temperature_y'].sum() - mergedDays['Station Temperature_x'].sum()
-            scores.append((mergedDays.iloc[0]['IEM'], score))
-        scores.sort(key=lambda tup: tup[1])
+            mergedDays['score'] = mergedDays['Station Wind_y'] - mergedDays['Station Wind_x'] + mergedDays['Station Temperature_y'] - mergedDays['Station Temperature_x']
+            hours = mergedDays.groupby(by=['Hour'])
+            for index, row in hours:
+                scoresByHour[int(index/3)].append((mergedDays.iloc[0]['IEM'], row))"""
 
+
+
+        # Set ups with IEMs and get unique constraints
         nodeswithiems = []
         counter = 0
         unicon = bigData['Constraint'].unique()
+
+        # For each unique constraint
         for c in unicon:
+            # Progress bar
             counter += 1
             percent = (float(counter) / float(len(unicon)))
             bar.progress(percent)
 
+            # If its not in constraints, go on
             if c not in states.keys():
                 continue
 
+            # Get the data for the constraint and the score for it, and append that
             nodeData = bigData[(bigData['Constraint'] == c) & (bigData['Region'] == states[c])]
-            absol = node_prioritizer.line_fit(nodeData)
+            absol = node_prioritizer.line_fit(nodeData, fc)
             temp = [c, states[c], absol[0], absol[1]]
             nodeswithiems.append(temp)
 
-        nodeswithiems = pd.DataFrame(nodeswithiems, columns=['Constraint', 'State', 'IEM', 'Score'])
+        # Sort the scores and set the constraints in order
+        nodeswithiems = pd.DataFrame(nodeswithiems, columns=['Constraint', 'State', 'IEM', 'Score']).sort_values(by='Score', ascending=True)
+        cons = nodeswithiems['Constraint']
 
-        cons = []
 
-        for tup in scores:
-            tempCons = nodeswithiems[nodeswithiems['IEM'] == tup[0]]
-            tempCons.sort_values(by='Score')
-            for c in tempCons['Constraint'].to_numpy():
-                cons.append(c)
 
     # End of Tab
 
@@ -263,13 +276,14 @@ def compile():
     st.write("Correlation between Data: " + str(pearson))
 
 
-    # Make Seaborns chart
+    # Make Seaborn chart of Means
     st.markdown("---")
     st.subheader("MEAN")
     bins, df, colors = data_formatter.make_table_matrix(frame, dataSelectX, dataSelectY, 'mean')
     plot = dashboard_graph_creator.bucket_chart_maker(bins, df, nodeSelectX, nodeSelectY, dataSelectX, dataSelectY, colors)
     st.pyplot(plot)
 
+    # Make Seaborn chart of Medians
     st.markdown("---")
     st.subheader("MEDIAN")
     bins, df, colors = data_formatter.make_table_matrix(frame, dataSelectX, dataSelectY, 'median')
@@ -503,7 +517,7 @@ def time_until_end_of_day():
 @st.cache(ttl=6000)
 def all_nodes_getter(cons, total, weekAgo):
     nodesAffectedPos = pd.DataFrame()
-    counter = 0
+    weekAgo = weekAgo-datetime.timedelta(days=75)
 
     for c in cons:
         r = total[total['Cons_name'] == c]

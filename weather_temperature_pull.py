@@ -164,7 +164,7 @@ def get_forecast(today):
     comm = """SELECT f.dt, ms.iem_id, f.temp, f.wind_speed
     FROM weather.forecast f
     LEFT JOIN weather.meta_selected ms ON ms.owm_id = f.owm_id
-    WHERE f.dt > '""" + today.strftime("%Y-%m-%d") + """' AND iem_id != ''
+    WHERE date(f.dt) = '""" + today.strftime("%Y-%m-%d") + """' AND iem_id != ''
     ORDER BY f.dt DESC"""
 
     # Get and return

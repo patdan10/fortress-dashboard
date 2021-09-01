@@ -1,5 +1,6 @@
 cons = {
     '20769   _CEDAR_CRCEDAR__GRNWOO11             LN': 'KAN',
+    'AESTARFTSAES': 'KAN',
     'BEAEURFLIBRO': 'KAN',
     'CHAWATCHAPAT': 'DAK',
     'CIMXF3CIMXF2': 'TEX',
